@@ -593,23 +593,14 @@ export const PropertyInspector: React.FC = () => {
   useEffect(() => {
     setIsCodeMode(activeTab === 'CODE');
   }, [activeTab, setIsCodeMode]);
-  
+
   // Szinkronizálja az inspector state-et a preview kontextussal
-  // Using refs to avoid infinite loops from state object identity changes
-  const stateRef = React.useRef(state);
-  const classesRef = React.useRef(generatedClasses);
-  
+  // Using memoization to detect actual changes efficiently
   useEffect(() => {
-    // Only update if the serialized values actually changed
-    const stateJson = JSON.stringify(state);
-    const prevStateJson = JSON.stringify(stateRef.current);
-    
-    if (stateJson !== prevStateJson || generatedClasses !== classesRef.current) {
-      stateRef.current = state;
-      classesRef.current = generatedClasses;
-      setInspectorState(state);
-      setGeneratedClasses(generatedClasses);
-    }
+    // Sync state and classes to preview context on every change
+    // The context will handle change detection on its end
+    setInspectorState(state);
+    setGeneratedClasses(generatedClasses);
   }, [state, generatedClasses, setInspectorState, setGeneratedClasses]);
 
   // --- Event Handlers (memoizált) ---
