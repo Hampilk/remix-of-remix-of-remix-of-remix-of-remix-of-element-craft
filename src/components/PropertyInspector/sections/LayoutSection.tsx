@@ -272,6 +272,11 @@ interface PositionSectionProps {
 const PositionSection = memo<PositionSectionProps>(({ position, onPositionChange }) => {
   const isPositioned = useMemo(() => position.type !== 'static' && position.type !== 'relative', [position.type]);
 
+  const handleOffsetChange = useCallback((key: keyof PositionValue, value: string) => {
+    const normalized = normalizeNumericValue(value);
+    onPositionChange(key, normalized);
+  }, [onPositionChange]);
+
   return (
     <AccordionItem value="position-section" className="border-none">
       <AccordionTrigger className="py-1.5 text-xs font-medium text-muted-foreground hover:no-underline">
@@ -287,15 +292,15 @@ const PositionSection = memo<PositionSectionProps>(({ position, onPositionChange
             <div className="space-y-1">
               <label className="text-[10px] text-muted-foreground block">Offsets</label>
               <div className="grid grid-cols-2 gap-2">
-                <LabeledInput label="Left" value={position.l} onChange={(v) => onPositionChange('l', v)} placeholder="auto" />
-                <LabeledInput label="Top" value={position.t} onChange={(v) => onPositionChange('t', v)} placeholder="auto" />
-                <LabeledInput label="Right" value={position.r} onChange={(v) => onPositionChange('r', v)} placeholder="auto" />
-                <LabeledInput label="Bottom" value={position.b} onChange={(v) => onPositionChange('b', v)} placeholder="auto" />
+                <LabeledInput label="Left" value={position.l} onChange={(v) => handleOffsetChange('l', v)} placeholder="auto" />
+                <LabeledInput label="Top" value={position.t} onChange={(v) => handleOffsetChange('t', v)} placeholder="auto" />
+                <LabeledInput label="Right" value={position.r} onChange={(v) => handleOffsetChange('r', v)} placeholder="auto" />
+                <LabeledInput label="Bottom" value={position.b} onChange={(v) => handleOffsetChange('b', v)} placeholder="auto" />
               </div>
             </div>
             <div>
               <label className="text-[10px] text-muted-foreground block mb-1">Z-Index</label>
-              <LabeledInput label="Z" value={position.zIndex} onChange={(v) => onPositionChange('zIndex', v)} placeholder="auto" />
+              <LabeledInput label="Z" value={position.zIndex} onChange={(v) => handleOffsetChange('zIndex', v)} placeholder="auto" />
             </div>
           </>
         )}
