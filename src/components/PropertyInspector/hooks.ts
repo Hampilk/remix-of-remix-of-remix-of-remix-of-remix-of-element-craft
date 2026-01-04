@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import type { InspectorState, Breakpoint } from './types';
 import { DEFAULT_INSPECTOR_STATE } from './constants';
+import { normalizeNumericValue } from './utils/tailwindUtils';
 
 // Type for breakpoint-specific state storage
 type BreakpointStates = Record<Breakpoint, Partial<InspectorState>>;
