@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import {
-  Eye, Save, Laptop, Send, Sparkles, 
+  Eye, Save, Laptop, Send, Sparkles,
   Loader2, AlertCircle, CheckCircle2
 } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -16,10 +16,10 @@ import { useCodePreview } from '@/contexts/CodePreviewContext';
 
 import type { TabMode, Breakpoint, BorderRadiusTab, InspectorState } from './types';
 import { DEFAULT_OPEN_SECTIONS, BREAKPOINTS } from './constants';
-import { 
-  useInspectorState, 
-  useGeneratedClasses, 
-  useGeneratedStyles, 
+import {
+  useInspectorState,
+  useGeneratedClasses,
+  useGeneratedStyles,
   useGeneratedCode
 } from './hooks';
 import { useAIStyler } from './useAIStyler';
@@ -71,12 +71,11 @@ const AIStatusMessage = memo<AIStatusMessageProps>(({ message, error }) => {
   const displayMessage = error || message;
 
   return (
-    <div 
-      className={`flex items-start gap-2 p-2 rounded-lg text-xs ${
-        isError 
-          ? 'bg-destructive/10 text-destructive border border-destructive/20' 
+    <div
+      className={`flex items-start gap-2 p-2 rounded-lg text-xs ${isError
+          ? 'bg-destructive/10 text-destructive border border-destructive/20'
           : 'bg-primary/10 text-primary border border-primary/20'
-      }`}
+        }`}
       role="alert"
       aria-live="polite"
     >
@@ -113,7 +112,7 @@ const SelectedElementInfo = memo<SelectedElementInfoProps>(({ tag, elementId, ge
         </div>
         <span className="text-[10px]">#{elementId || 'element'}</span>
       </div>
-      <div 
+      <div
         className="font-mono text-[10px] bg-secondary/50 border border-border rounded-lg px-2 py-2 break-all"
         role="status"
         aria-label="Generated CSS classes"
@@ -193,8 +192,8 @@ const AIPromptForm = memo<AIPromptFormProps>(({
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
-        <label 
-          htmlFor="ai-prompt-textarea" 
+        <label
+          htmlFor="ai-prompt-textarea"
           className="text-xs font-medium text-muted-foreground mb-2 block"
         >
           Describe what you want to change:
@@ -217,19 +216,19 @@ const AIPromptForm = memo<AIPromptFormProps>(({
           </div>
         </div>
       </div>
-      
+
       <AIStatusMessage message={statusMessage} error={error} />
-      
-      <SelectedElementInfo 
+
+      <SelectedElementInfo
         tag={state.tag}
         elementId={state.elementId}
         generatedClasses={generatedClasses}
       />
 
       <div className="flex gap-2">
-        <Button 
-          type="submit" 
-          disabled={!promptValue.trim() || isLoading} 
+        <Button
+          type="submit"
+          disabled={!promptValue.trim() || isLoading}
           className="flex-1 gap-2"
         >
           {isLoading ? (
@@ -244,17 +243,17 @@ const AIPromptForm = memo<AIPromptFormProps>(({
             </>
           )}
         </Button>
-        <Button 
-          type="button" 
-          variant="outline" 
+        <Button
+          type="button"
+          variant="outline"
           onClick={onCancel}
           disabled={isLoading}
         >
           Cancel
         </Button>
       </div>
-      
-      <QuickSuggestions 
+
+      <QuickSuggestions
         onSelect={onPromptChange}
         disabled={isLoading}
       />
@@ -296,15 +295,15 @@ const CodeEditor = memo<CodeEditorProps>(({
   const isHtmlMode = mode === 'html';
   const currentValue = isHtmlMode ? htmlValue : cssValue;
   const handleChange = isHtmlMode ? onHtmlChange : onCssChange;
-  const placeholder = isHtmlMode 
-    ? "<div class='my-element'>Text...</div>" 
+  const placeholder = isHtmlMode
+    ? "<div class='my-element'>Text...</div>"
     : ".my-element { color: red; }";
   const textColorClass = isHtmlMode ? 'text-orange-400' : 'text-cyan-400';
 
   return (
     <div className="flex flex-col h-full gap-3">
-      <Tabs 
-        value={mode} 
+      <Tabs
+        value={mode}
         onValueChange={(v) => onModeChange(v as CodeTabMode)}
         className="w-full"
       >
@@ -313,7 +312,7 @@ const CodeEditor = memo<CodeEditorProps>(({
           <TabsTrigger value="css" className="text-[10px]">CSS</TabsTrigger>
         </TabsList>
       </Tabs>
-      
+
       <Textarea
         value={currentValue}
         onChange={(e) => handleChange(e.target.value)}
@@ -322,36 +321,36 @@ const CodeEditor = memo<CodeEditorProps>(({
         spellCheck={false}
         aria-label={`Edit custom ${mode} code`}
       />
-      
+
       <div className="text-[10px] text-muted-foreground bg-secondary/30 rounded-lg px-3 py-2 flex items-center gap-2">
         <Eye className="w-3 h-3" aria-hidden="true" />
         Result visible in Preview panel on the right
       </div>
-      
+
       <div className="flex items-center justify-between">
         <span className="text-[10px] text-muted-foreground">
           Custom code mode
         </span>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="h-7 text-[10px]" 
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-[10px]"
             onClick={onClear}
           >
             Clear
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="h-7 text-[10px]" 
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-[10px]"
             onClick={onCopy}
           >
             Copy
           </Button>
-          <Button 
-            size="sm" 
-            className="h-7 text-[10px] gap-1" 
+          <Button
+            size="sm"
+            className="h-7 text-[10px] gap-1"
             onClick={onSave}
           >
             <Save className="w-3 h-3" aria-hidden="true" />
@@ -380,7 +379,7 @@ interface EditorViewProps {
   borderRadiusTab: BorderRadiusTab;
   onBorderRadiusTabChange: (tab: BorderRadiusTab) => void;
   updateState: <K extends keyof InspectorState>(
-    key: K, 
+    key: K,
     value: InspectorState[K],
     breakpoint?: Breakpoint
   ) => void;
@@ -421,8 +420,8 @@ const EditorView = memo<EditorViewProps>(({
     <div className="space-y-2">
       {/* Breakpoint Selector */}
       <div className="flex items-center justify-between mb-3">
-        <BreakpointSelector 
-          value={currentBreakpoint} 
+        <BreakpointSelector
+          value={currentBreakpoint}
           onChange={(v) => onBreakpointChange(v as Breakpoint)}
           options={BREAKPOINTS}
         />
@@ -430,8 +429,8 @@ const EditorView = memo<EditorViewProps>(({
           <Laptop className="w-3 h-3" aria-hidden="true" />
           <span>{currentBreakpoint === 'base' ? 'All' : currentBreakpoint.toUpperCase()}</span>
           {hasBreakpointOverrides(currentBreakpoint) && (
-            <span 
-              className="w-1.5 h-1.5 rounded-full bg-primary" 
+            <span
+              className="w-1.5 h-1.5 rounded-full bg-primary"
               title="Has overrides"
               aria-label="Has breakpoint overrides"
             />
@@ -440,9 +439,9 @@ const EditorView = memo<EditorViewProps>(({
       </div>
 
       {/* Category Tabs */}
-      <Tabs 
-        value={category} 
-        onValueChange={(v) => onCategoryChange(v as EditCategory)} 
+      <Tabs
+        value={category}
+        onValueChange={(v) => onCategoryChange(v as EditCategory)}
         className="w-full mb-3"
       >
         <TabsList className="grid grid-cols-4 h-8 w-full">
@@ -453,10 +452,10 @@ const EditorView = memo<EditorViewProps>(({
         </TabsList>
       </Tabs>
 
-      <Accordion 
-        type="multiple" 
-        value={openSections} 
-        onValueChange={onOpenSectionsChange} 
+      <Accordion
+        type="multiple"
+        value={openSections}
+        onValueChange={onOpenSectionsChange}
         className="space-y-1"
       >
         {category === 'appearance' && (
@@ -468,14 +467,14 @@ const EditorView = memo<EditorViewProps>(({
             updateDeepNestedState={updateDeepNestedState}
           />
         )}
-        
+
         {category === 'layout' && (
           <LayoutSection
             state={state}
             updateNestedState={updateNestedState}
           />
         )}
-        
+
         {category === 'typography' && (
           <TypographySection
             state={state}
@@ -483,7 +482,7 @@ const EditorView = memo<EditorViewProps>(({
             updateNestedState={updateNestedState}
           />
         )}
-        
+
         {category === 'code' && (
           <CodeSection
             state={state}
@@ -516,17 +515,17 @@ const InspectorFooter = memo<InspectorFooterProps>(({ elementId, onReset, onAppl
         #{elementId || 'element'}
       </span>
       <div className="flex gap-2">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="h-6 px-2 text-[10px]" 
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-6 px-2 text-[10px]"
           onClick={onReset}
         >
           Reset
         </Button>
         {onApply && (
-          <Button 
-            size="sm" 
+          <Button
+            size="sm"
             className="h-6 px-2 text-[10px]"
             onClick={onApply}
           >
@@ -558,31 +557,31 @@ export const PropertyInspector: React.FC = () => {
 
   // --- Hooks ---
   const { toast } = useToast();
-  const { 
-    customHtml, 
-    setCustomHtml, 
-    customCss, 
-    setCustomCss, 
-    setIsCodeMode, 
-    saveCode, 
-    setInspectorState, 
-    setGeneratedClasses 
+  const {
+    customHtml,
+    setCustomHtml,
+    customCss,
+    setCustomCss,
+    setIsCodeMode,
+    saveCode,
+    setInspectorState,
+    setGeneratedClasses
   } = useCodePreview();
-  
-  const { 
-    state, 
+
+  const {
+    state,
     currentBreakpoint,
     setCurrentBreakpoint,
-    updateState, 
-    updateNestedState, 
+    updateState,
+    updateNestedState,
     updateDeepNestedState,
     applyStateChanges,
     resetTransforms,
     hasBreakpointOverrides
   } = useInspectorState();
-  
+
   const { applyPrompt, isLoading: isAILoading, error: aiError } = useAIStyler();
-  
+
   const generatedClasses = useGeneratedClasses(state, currentBreakpoint);
   const generatedStyles = useGeneratedStyles(state);
   const generatedCode = useGeneratedCode(state, generatedClasses, generatedStyles);
@@ -593,35 +592,24 @@ export const PropertyInspector: React.FC = () => {
   useEffect(() => {
     setIsCodeMode(activeTab === 'CODE');
   }, [activeTab, setIsCodeMode]);
-  
+
   // Szinkronizálja az inspector state-et a preview kontextussal
-  // Using refs to avoid infinite loops from state object identity changes
-  const stateRef = React.useRef(state);
-  const classesRef = React.useRef(generatedClasses);
-  
+  // setState functions are stable and don't need to be in dependencies
   useEffect(() => {
-    // Only update if the serialized values actually changed
-    const stateJson = JSON.stringify(state);
-    const prevStateJson = JSON.stringify(stateRef.current);
-    
-    if (stateJson !== prevStateJson || generatedClasses !== classesRef.current) {
-      stateRef.current = state;
-      classesRef.current = generatedClasses;
-      setInspectorState(state);
-      setGeneratedClasses(generatedClasses);
-    }
-  }, [state, generatedClasses, setInspectorState, setGeneratedClasses]);
+    setInspectorState(state);
+    setGeneratedClasses(generatedClasses);
+  }, [state, generatedClasses]);
 
   // --- Event Handlers (memoizált) ---
 
   const handleApplyPrompt = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!aiPromptInput.trim() || isAILoading) return;
-    
+
     setAiStatusMessage(null);
-    
+
     const result = await applyPrompt(aiPromptInput, state);
-    
+
     if (result.success && Object.keys(result.changes).length > 0) {
       applyStateChanges(result.changes);
       setAiStatusMessage(result.message || 'Styles applied successfully!');
@@ -683,36 +671,36 @@ export const PropertyInspector: React.FC = () => {
   // --- Floating Panels (Early Return) ---
   if (showTemplates) {
     return (
-      <ComponentTemplates 
-        onApplyTemplate={handleApplyTemplate} 
-        onClose={() => setShowTemplates(false)} 
+      <ComponentTemplates
+        onApplyTemplate={handleApplyTemplate}
+        onClose={() => setShowTemplates(false)}
       />
     );
   }
 
   if (showPresets) {
     return (
-      <StylePresets 
-        currentState={state} 
-        onLoadPreset={handleLoadPreset} 
-        onClose={() => setShowPresets(false)} 
+      <StylePresets
+        currentState={state}
+        onLoadPreset={handleLoadPreset}
+        onClose={() => setShowPresets(false)}
       />
     );
   }
 
   if (showExport) {
     return (
-      <ExportComponent 
-        state={state} 
-        generatedClasses={generatedClasses} 
-        onClose={() => setShowExport(false)} 
+      <ExportComponent
+        state={state}
+        generatedClasses={generatedClasses}
+        onClose={() => setShowExport(false)}
       />
     );
   }
 
   // --- Main Render ---
   return (
-    <div 
+    <div
       className="bg-card border border-border rounded-2xl shadow-[var(--shadow-panel)] w-80 max-h-[90vh] flex flex-col overflow-hidden"
       role="region"
       aria-label="Property Inspector"
@@ -743,7 +731,7 @@ export const PropertyInspector: React.FC = () => {
             generatedClasses={generatedClasses}
           />
         )}
-        
+
         {activeTab === 'CODE' && (
           <CodeEditor
             mode={codeTabMode}
@@ -757,7 +745,7 @@ export const PropertyInspector: React.FC = () => {
             onSave={handleSaveCode}
           />
         )}
-        
+
         {activeTab === 'EDIT' && (
           <EditorView
             category={editCategory}
