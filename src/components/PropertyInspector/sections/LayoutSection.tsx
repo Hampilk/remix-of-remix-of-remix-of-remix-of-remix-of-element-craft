@@ -62,6 +62,16 @@ function isValidCssValue(value: string): boolean {
   return /^(auto|fit-content|min-content|max-content|\d+\.?\d*(px|rem|em|%|vh|vw)?)$/.test(value.trim());
 }
 
+// Extract numeric-only value (remove units) for storing in state
+function normalizeNumericValue(value: string): string {
+  const trimmed = value.trim();
+  if (trimmed === '' || trimmed === 'auto' || trimmed === '0') return trimmed;
+  // Extract just the number part
+  const match = trimmed.match(/^([\d.-]+)/);
+  return match ? match[1] : trimmed;
+}
+
+// Format value for display (add units back if numeric)
 function sanitizeCssValue(value: string): string {
   const trimmed = value.trim();
   if (trimmed === '' || trimmed === 'auto') return trimmed;
