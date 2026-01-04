@@ -71,9 +71,10 @@ export const PreviewBox: React.FC<PreviewBoxProps> = ({
       }
     }
     
-    // Border
+    // Border - normalize width to prevent duplicate units
     if (state.border.color && state.border.width !== '0') {
-      styles.border = `${state.border.width}px ${state.border.style} ${state.border.color}`;
+      const borderWidth = normalizeNumericValue(state.border.width) || '1';
+      styles.border = `${borderWidth}px ${state.border.style} ${state.border.color}`;
     }
     
     // Padding - normalize values to prevent duplicate units
