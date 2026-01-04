@@ -283,41 +283,6 @@ function deepMerge(target: Record<string, unknown>, source: Record<string, unkno
   return result;
 }
 
-// Utility: Normalize numeric values to ensure no duplicate units
-function normalizeNumericValue(value: string | number | null | undefined): string {
-  if (!value) return '';
-  const str = String(value).trim();
-  // Remove any existing units to get just the number
-  const numMatch = str.match(/^([\d.-]+)/);
-  return numMatch ? numMatch[1] : str;
-}
-
-// Utility: Generate Tailwind class with proper unit handling
-function getTailwindClass(property: string, value: string, breakpoint: Breakpoint = 'base'): string {
-  const prefix = breakpoint === 'base' ? '' : `${breakpoint}:`;
-
-  if (!value || value === '0') return '';
-
-  const numValue = normalizeNumericValue(value);
-
-  // For position and size properties, use bracket notation with units
-  if (property.startsWith('position-') || property.startsWith('size-')) {
-    return `${prefix}${property}-[${numValue}px]`;
-  }
-
-  // For spacing properties with non-standard values, use bracket notation
-  if (property.startsWith('p-') || property.startsWith('m-')) {
-    // Try standard Tailwind token first (e.g., p-4, m-2)
-    if (/^\d+$/.test(numValue) && ['0', '1', '2', '3', '4', '6', '8', '10', '12', '14', '16', '20', '24', '28', '32', '36', '40', '44', '48', '52', '56', '60', '64', '72', '80', '96'].includes(numValue)) {
-      return `${prefix}${property}-${numValue}`;
-    }
-    // Otherwise use bracket notation
-    return `${prefix}${property}-[${numValue}px]`;
-  }
-
-  return `${prefix}${property}-${value}`;
-}
-
 // Tailwind class generation hook with multi-breakpoint support
 export const useGeneratedClasses = (state: InspectorState, breakpoint: Breakpoint = 'base') => {
   const prefix = breakpoint === 'base' ? '' : `${breakpoint}:`;
