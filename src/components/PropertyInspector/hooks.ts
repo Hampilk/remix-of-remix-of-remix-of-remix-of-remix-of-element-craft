@@ -374,19 +374,120 @@ export const useAllBreakpointClasses = (
   return useMemo(() => {
     const allClasses: string[] = [];
     const breakpoints: Breakpoint[] = ['base', 'sm', 'md', 'lg', 'xl', '2xl'];
-    
+
     breakpoints.forEach(bp => {
+      // Only generate if breakpoint has overrides or is base
       if (bp === 'base' || Object.keys(breakpointStates[bp] || {}).length > 0) {
         const effectiveState = getEffectiveState(bp);
         const prefix = bp === 'base' ? '' : `${bp}:`;
-        
-        // Generate classes for this breakpoint (simplified - reuse logic from useGeneratedClasses)
-        if (effectiveState.padding.l && effectiveState.padding.l !== '0') 
-          allClasses.push(`${prefix}pl-${effectiveState.padding.l}`);
-        // ... add more as needed
+
+        // Padding
+        if (effectiveState.padding.l && effectiveState.padding.l !== '0')
+          allClasses.push(`${prefix}pl-[${normalizeNumericValue(effectiveState.padding.l)}px]`);
+        if (effectiveState.padding.t && effectiveState.padding.t !== '0')
+          allClasses.push(`${prefix}pt-[${normalizeNumericValue(effectiveState.padding.t)}px]`);
+        if (effectiveState.padding.r && effectiveState.padding.r !== '0')
+          allClasses.push(`${prefix}pr-[${normalizeNumericValue(effectiveState.padding.r)}px]`);
+        if (effectiveState.padding.b && effectiveState.padding.b !== '0')
+          allClasses.push(`${prefix}pb-[${normalizeNumericValue(effectiveState.padding.b)}px]`);
+
+        // Margin
+        if (effectiveState.margin.x && effectiveState.margin.x !== '0')
+          allClasses.push(`${prefix}mx-[${normalizeNumericValue(effectiveState.margin.x)}px]`);
+        if (effectiveState.margin.y && effectiveState.margin.y !== '0')
+          allClasses.push(`${prefix}my-[${normalizeNumericValue(effectiveState.margin.y)}px]`);
+
+        // Position
+        if (effectiveState.position.type !== 'static')
+          allClasses.push(`${prefix}${effectiveState.position.type}`);
+        if (effectiveState.position.zIndex)
+          allClasses.push(`${prefix}z-[${normalizeNumericValue(effectiveState.position.zIndex)}]`);
+        if (effectiveState.position.l)
+          allClasses.push(`${prefix}left-[${normalizeNumericValue(effectiveState.position.l)}px]`);
+        if (effectiveState.position.t)
+          allClasses.push(`${prefix}top-[${normalizeNumericValue(effectiveState.position.t)}px]`);
+        if (effectiveState.position.r)
+          allClasses.push(`${prefix}right-[${normalizeNumericValue(effectiveState.position.r)}px]`);
+        if (effectiveState.position.b)
+          allClasses.push(`${prefix}bottom-[${normalizeNumericValue(effectiveState.position.b)}px]`);
+
+        // Size
+        if (effectiveState.size.width)
+          allClasses.push(`${prefix}w-[${effectiveState.size.width}]`);
+        if (effectiveState.size.height)
+          allClasses.push(`${prefix}h-[${effectiveState.size.height}]`);
+        if (effectiveState.size.maxWidth)
+          allClasses.push(`${prefix}max-w-[${effectiveState.size.maxWidth}]`);
+        if (effectiveState.size.maxHeight)
+          allClasses.push(`${prefix}max-h-[${effectiveState.size.maxHeight}]`);
+        if (effectiveState.size.minWidth)
+          allClasses.push(`${prefix}min-w-[${effectiveState.size.minWidth}]`);
+        if (effectiveState.size.minHeight)
+          allClasses.push(`${prefix}min-h-[${effectiveState.size.minHeight}]`);
+
+        // Typography
+        if (effectiveState.typography.fontFamily !== 'inter')
+          allClasses.push(`${prefix}font-${effectiveState.typography.fontFamily}`);
+        if (effectiveState.typography.fontWeight !== 'normal')
+          allClasses.push(`${prefix}font-${effectiveState.typography.fontWeight}`);
+        if (effectiveState.typography.fontSize)
+          allClasses.push(`${prefix}text-[${effectiveState.typography.fontSize}]`);
+        if (effectiveState.typography.letterSpacing !== 'normal')
+          allClasses.push(`${prefix}tracking-${effectiveState.typography.letterSpacing}`);
+        if (effectiveState.typography.lineHeight)
+          allClasses.push(`${prefix}leading-[${effectiveState.typography.lineHeight}]`);
+        if (effectiveState.typography.textAlign !== 'left')
+          allClasses.push(`${prefix}text-${effectiveState.typography.textAlign}`);
+
+        // Transforms
+        if (effectiveState.transforms.rotate !== 0)
+          allClasses.push(`${prefix}rotate-[${effectiveState.transforms.rotate}deg]`);
+        if (effectiveState.transforms.scale !== 100)
+          allClasses.push(`${prefix}scale-[${effectiveState.transforms.scale / 100}]`);
+        if (effectiveState.transforms.translateX !== 0)
+          allClasses.push(`${prefix}translate-x-[${effectiveState.transforms.translateX}px]`);
+        if (effectiveState.transforms.translateY !== 0)
+          allClasses.push(`${prefix}translate-y-[${effectiveState.transforms.translateY}px]`);
+        if (effectiveState.transforms.skewX !== 0)
+          allClasses.push(`${prefix}skew-x-[${effectiveState.transforms.skewX}deg]`);
+        if (effectiveState.transforms.skewY !== 0)
+          allClasses.push(`${prefix}skew-y-[${effectiveState.transforms.skewY}deg]`);
+
+        // Effects
+        if (effectiveState.effects.opacity !== 100)
+          allClasses.push(`${prefix}opacity-[${effectiveState.effects.opacity / 100}]`);
+        if (effectiveState.effects.blur > 0)
+          allClasses.push(`${prefix}blur-[${effectiveState.effects.blur}px]`);
+        if (effectiveState.effects.backdropBlur > 0)
+          allClasses.push(`${prefix}backdrop-blur-[${effectiveState.effects.backdropBlur}px]`);
+        if (effectiveState.effects.hueRotate !== 0)
+          allClasses.push(`${prefix}hue-rotate-[${effectiveState.effects.hueRotate}deg]`);
+        if (effectiveState.effects.saturation !== 100)
+          allClasses.push(`${prefix}saturate-[${effectiveState.effects.saturation / 100}]`);
+        if (effectiveState.effects.brightness !== 100)
+          allClasses.push(`${prefix}brightness-[${effectiveState.effects.brightness / 100}]`);
+        if (effectiveState.effects.contrast !== 100)
+          allClasses.push(`${prefix}contrast-[${effectiveState.effects.contrast / 100}]`);
+        if (effectiveState.effects.grayscale > 0)
+          allClasses.push(`${prefix}grayscale-[${effectiveState.effects.grayscale / 100}]`);
+        if (effectiveState.effects.invert > 0)
+          allClasses.push(`${prefix}invert-[${effectiveState.effects.invert / 100}]`);
+        if (effectiveState.effects.sepia > 0)
+          allClasses.push(`${prefix}sepia-[${effectiveState.effects.sepia / 100}]`);
+        if (effectiveState.effects.shadow !== 'none')
+          allClasses.push(`${prefix}shadow-${effectiveState.effects.shadow}`);
+
+        // Border
+        if (effectiveState.border.radius.all > 0)
+          allClasses.push(`${prefix}rounded-[${effectiveState.border.radius.all}px]`);
+        if (effectiveState.border.width && effectiveState.border.width !== '0')
+          allClasses.push(`${prefix}border-[${normalizeNumericValue(effectiveState.border.width)}px]`);
+        if (effectiveState.border.style !== 'solid' && effectiveState.border.style !== 'none')
+          allClasses.push(`${prefix}border-${effectiveState.border.style}`);
       }
     });
-    
+
+    // Remove duplicates and return unique classes
     return [...new Set(allClasses)].join(' ');
   }, [baseState, breakpointStates, getEffectiveState]);
 };
