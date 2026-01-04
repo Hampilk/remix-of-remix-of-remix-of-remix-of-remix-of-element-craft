@@ -585,6 +585,20 @@ const FiltersSection = memo<FiltersSectionProps>(({
 FiltersSection.displayName = 'FiltersSection';
 
 // ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+// Extract numeric-only value (remove units) for storing in state
+function normalizeNumericValue(value: string | number): string {
+  if (typeof value === 'number') return String(value);
+  const trimmed = String(value).trim();
+  if (trimmed === '' || trimmed === '0') return trimmed;
+  // Extract just the number part
+  const match = trimmed.match(/^([\d.-]+)/);
+  return match ? match[1] : trimmed;
+}
+
+// ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
@@ -612,7 +626,9 @@ export const AppearanceSection = memo<AppearanceSectionProps>(({
   }, [updateNestedState]);
 
   const handleBorderChange = useCallback((key: string, value: any) => {
-    updateNestedState('border', key as any, value);
+    // Normalize border width to numeric-only value
+    const normalizedValue = key === 'width' ? normalizeNumericValue(value) : value;
+    updateNestedState('border', key as any, normalizedValue);
   }, [updateNestedState]);
 
   const handleRadiusChange = useCallback((corner: string, value: number) => {
