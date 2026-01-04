@@ -3,6 +3,15 @@
 import React, { useMemo } from 'react';
 import type { InspectorState } from './types';
 
+// Utility: Normalize numeric values to ensure no duplicate units
+function normalizeNumericValue(value: string | number | null | undefined): string {
+  if (!value) return '';
+  const str = String(value).trim();
+  // Remove any existing units to get just the number
+  const numMatch = str.match(/^([\d.-]+)/);
+  return numMatch ? numMatch[1] : str;
+}
+
 interface PreviewBoxProps {
   state: InspectorState;
   generatedClasses: string;
