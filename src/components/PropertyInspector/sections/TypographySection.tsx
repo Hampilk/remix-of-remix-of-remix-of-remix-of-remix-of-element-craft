@@ -251,7 +251,15 @@ const TypographyStylesSection = memo<TypographyStylesSectionProps>(({
     (v: string) => {
       // Validáció: csak számok és érvényes CSS egységek
       if (/^\d*\.?\d*(px|rem|em|%)?$/.test(v) || v === '') {
-        onTypographyChange('fontSize', v);
+        // Normalize to numeric-only (remove units)
+        const trimmed = v.trim();
+        if (trimmed === '' || trimmed === '0') {
+          onTypographyChange('fontSize', trimmed);
+        } else {
+          const match = trimmed.match(/^([\d.-]+)/);
+          const normalized = match ? match[1] : trimmed;
+          onTypographyChange('fontSize', normalized);
+        }
       }
     },
     [onTypographyChange]
