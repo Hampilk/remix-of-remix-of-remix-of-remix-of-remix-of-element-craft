@@ -1,0 +1,1578 @@
+```App.tsx
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Index from "./pages/Index";
+import NotFound from "./pages/NotFound";
+
+const queryClient = new QueryClient();
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
+
+export default App;
+
+```
+```main.tsx
+import { createRoot } from "react-dom/client";
+import App from "./App.tsx";
+import "./index.css";
+
+createRoot(document.getElementById("root")!).render(<App />);
+
+```
+```pages/Index.tsx
+import { PropertyInspector } from "@/components/PropertyInspector";
+import { ThemeCustomizer } from "@/components/ThemeCustomizer";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+
+const Index = () => {
+  return (
+    <ThemeProvider>
+      <div className="min-h-screen bg-[hsl(var(--editor-bg))] bg-[image:var(--gradient-editor)] p-8 flex items-center justify-center gap-6">
+        <ThemeCustomizer />
+        <PropertyInspector />
+      </div>
+    </ThemeProvider>
+  );
+};
+
+export default Index;
+
+```
+```contexts/ThemeContext.tsx
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+
+export type ThemeMode = 'light' | 'dark' | 'system';
+export type ShapePreset = 'sharp' | 'rounded' | 'full';
+export type SolidStyle = 'color' | 'inverse' | 'contrast';
+export type EffectStyle = 'flat' | 'plastic';
+export type SurfaceStyle = 'filled' | 'translucent';
+export type DataStyle = 'categorical' | 'divergent' | 'sequential';
+export type TransitionStyle = 'all' | 'micro' | 'macro' | 'none';
+
+interface ColorPalette {
+  primary: string;
+  accent: string;
+  neutral: 'slate' | 'gray' | 'zinc';
+}
+
+interface ThemeState {
+  mode: ThemeMode;
+  shape: ShapePreset;
+  colors: ColorPalette;
+  solidStyle: SolidStyle;
+  effectStyle: EffectStyle;
+  surface: SurfaceStyle;
+  scaling: number;
+  dataStyle: DataStyle;
+  transition: TransitionStyle;
+  depthEffect: boolean;
+  noiseEffect: boolean;
+  borderWidth: number;
+  fieldBaseSize: number;
+  selectorBaseSize: number;
+}
+
+interface ThemeContextType {
+  theme: ThemeState;
+  setTheme: React.Dispatch<React.SetStateAction<ThemeState>>;
+  updateTheme: (updates: Partial<ThemeState>) => void;
+  resetTheme: () => void;
+}
+
+const defaultTheme: ThemeState = {
+  mode: 'system',
+  shape: 'rounded',
+  colors: {
+    primary: '217 91% 60%',
+    accent: '142 76% 36%',
+    neutral: 'slate',
+  },
+  solidStyle: 'color',
+  effectStyle: 'flat',
+  surface: 'translucent',
+  scaling: 100,
+  dataStyle: 'categorical',
+  transition: 'all',
+  depthEffect: false,
+  noiseEffect: false,
+  borderWidth: 1,
+  fieldBaseSize: 4,
+  selectorBaseSize: 4,
+};
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+export const ThemeProvider = ({ children }: { children: ReactNode }) => {
+  const [theme, setTheme] = useState<ThemeState>(() => {
+    const stored = localStorage.getItem('theme-customizer');
+    return stored ? { ...defaultTheme, ...JSON.parse(stored) } : defaultTheme;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('theme-customizer', JSON.stringify(theme));
+    
+    // Apply theme mode
+    const root = document.documentElement;
+    root.classList.remove('light', 'dark');
+    
+    if (theme.mode === 'system') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      root.classList.add(prefersDark ? 'dark' : 'light');
+    } else {
+      root.classList.add(theme.mode);
+    }
+
+    // Apply CSS variables
+    const radiusMap = { sharp: '0', rounded: '0.5rem', full: '9999px' };
+    root.style.setProperty('--radius', radiusMap[theme.shape]);
+    root.style.setProperty('--primary', theme.colors.primary);
+    root.style.setProperty('--accent', theme.colors.accent);
+    root.style.setProperty('--theme-scaling', `${theme.scaling}%`);
+    root.style.setProperty('--border-width', `${theme.borderWidth}px`);
+  }, [theme]);
+
+  const updateTheme = (updates: Partial<ThemeState>) => {
+    setTheme(prev => ({ ...prev, ...updates }));
+  };
+
+  const resetTheme = () => setTheme(defaultTheme);
+
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme, updateTheme, resetTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+};
+
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (!context) throw new Error('useTheme must be used within ThemeProvider');
+  return context;
+};
+
+```
+```components/PropertyInspector.tsx
+import { useState } from 'react';
+import {
+  RotateCcw, MousePointer2, Save, MoreHorizontal, X, ChevronDown,
+  Laptop, UnfoldHorizontal, UnfoldVertical, Scan, Square, Eye, Image, Move,
+  Zap, RotateCw, Maximize, WandSparkles, Sparkles, Paperclip, Figma, Send,
+  AlignHorizontalJustifyCenter, AlignVerticalJustifyCenter, Layers, Circle,
+  Droplet, Sun, Contrast, FlipHorizontal, GripVertical, Hash
+} from 'lucide-react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Textarea } from './ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
+import { HexColorPicker } from 'react-colorful';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
+
+type TabMode = 'EDIT' | 'PROMPT' | 'CODE';
+
+export const PropertyInspector = () => {
+  const [activeTab, setActiveTab] = useState<TabMode>('EDIT');
+  const [opacity, setOpacity] = useState(100);
+  const [translateX, setTranslateX] = useState(0);
+  const [translateY, setTranslateY] = useState(0);
+  const [skewX, setSkewX] = useState(0);
+  const [skewY, setSkewY] = useState(0);
+  const [rotate, setRotate] = useState(0);
+  const [scale, setScale] = useState(100);
+  const [rotateX, setRotateX] = useState(0);
+  const [rotateY, setRotateY] = useState(0);
+  const [rotateZ, setRotateZ] = useState(0);
+  const [perspective, setPerspective] = useState(0);
+  const [promptText, setPromptText] = useState('');
+  const [codeText, setCodeText] = useState('<h2 class="text-[18px] md:text-[20px] font-semibold tracking-tight pr-2 pb-3 pl-2">Layers</h2>');
+  
+  // New states
+  const [bgColor, setBgColor] = useState<string | null>(null);
+  const [borderColor, setBorderColor] = useState<string | null>(null);
+  const [ringColor, setRingColor] = useState<string | null>(null);
+  const [textColor, setTextColor] = useState<string | null>(null);
+  const [blur, setBlur] = useState(0);
+  const [backdropBlur, setBackdropBlur] = useState(0);
+  const [hueRotate, setHueRotate] = useState(0);
+  const [saturation, setSaturation] = useState(100);
+  const [brightness, setBrightness] = useState(100);
+  const [grayscale, setGrayscale] = useState(0);
+  const [invert, setInvert] = useState(0);
+  const [borderRadius, setBorderRadius] = useState({ all: 0, t: 0, r: 0, b: 0, l: 0 });
+  const [borderRadiusTab, setBorderRadiusTab] = useState<'all' | 't' | 'r' | 'b' | 'l'>('all');
+  const [inlineCSS, setInlineCSS] = useState('');
+  const [elementId, setElementId] = useState('');
+  const [openAccordions, setOpenAccordions] = useState<string[]>(['family', 'link', 'text', 'margin', 'padding']);
+
+  const ColorButton = ({ 
+    color, 
+    onChange, 
+    label 
+  }: { 
+    color: string | null; 
+    onChange: (color: string | null) => void; 
+    label: string;
+  }) => (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className={`h-7 flex items-center gap-2 px-2 py-1 text-xs rounded-md border border-border bg-card ${!color ? 'opacity-30' : ''}`}>
+          <div 
+            className="w-4 h-4 rounded-full border border-border" 
+            style={{ backgroundColor: color || 'hsl(var(--muted))' }}
+          />
+          <span className="text-xs truncate">{color ? label : `No ${label}`}</span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-3" align="start">
+        <HexColorPicker color={color || '#ffffff'} onChange={onChange} />
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="w-full mt-2 text-xs"
+          onClick={() => onChange(null)}
+        >
+          Clear
+        </Button>
+      </PopoverContent>
+    </Popover>
+  );
+
+  return (
+    <div className="bg-card border-border rounded-2xl shadow-[var(--shadow-panel)] w-80 max-h-[600px] flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-border py-2 px-4 bg-secondary/50 rounded-t-2xl flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <h3 className="text-xs uppercase font-medium text-muted-foreground">h2</h3>
+          <div className="flex border border-border rounded-md overflow-hidden">
+            {(['EDIT', 'PROMPT', 'CODE'] as TabMode[]).map((tab) => (
+              <button 
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-2 py-1 text-[8px] font-medium transition-colors cursor-pointer ${
+                  activeTab === tab 
+                    ? 'bg-primary hover:bg-primary/90 text-primary-foreground' 
+                    : 'bg-card text-muted-foreground hover:bg-secondary'
+                } ${tab !== 'EDIT' ? 'border-l border-border' : ''}`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          {[RotateCcw, MousePointer2, Save, MoreHorizontal, X].map((Icon, i) => (
+            <Button key={i} variant="ghost" size="icon" className="h-6 w-6 rounded-full">
+              <Icon className="w-3 h-3" />
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-4 overflow-y-auto flex-1">
+        {activeTab === 'PROMPT' ? (
+          <form className="space-y-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                Describe what you want to change:
+              </label>
+              <div className="relative">
+                <Textarea
+                  placeholder="Adapt to dark mode, add details, make adaptive, change text to..."
+                  value={promptText}
+                  onChange={(e) => setPromptText(e.target.value)}
+                  className="w-full resize-none min-h-[100px] max-h-[200px] overflow-y-auto text-xs hover:bg-secondary/50 pb-[40px] rounded-2xl"
+                />
+                <div className="absolute bottom-[16px] left-[9px] z-10 flex gap-1">
+                  {[
+                    { icon: WandSparkles, title: 'Prompt Builder' },
+                    { icon: Sparkles, title: 'AI Model', label: 'GPT-5' },
+                    { icon: Paperclip, title: 'Attach Files' },
+                    { icon: Figma, title: 'Import from Figma' },
+                  ].map(({ icon: Icon, title, label }) => (
+                    <button 
+                      key={title}
+                      type="button"
+                      className="flex items-center rounded-lg bg-card border border-border hover:border-primary/50 shadow-sm p-2 py-1 gap-1 text-[10px] hover:bg-secondary"
+                      title={title}
+                    >
+                      <Icon className="h-3 w-3" />
+                      {label && <>{label}<ChevronDown className="h-3 w-3" /></>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between items-center text-xs text-muted-foreground">
+                <div>Selected: <span className="font-medium font-mono text-xs uppercase text-foreground">h2</span></div>
+                <span className="text-[10px]">#aura-emgn5hp8g9knbc3d</span>
+              </div>
+              <div className="font-mono text-[10px] bg-secondary/50 border border-border rounded-lg px-2 py-2">
+                px-2 pb-3 text-[18px] md:text-[20px] font-semibold tracking-tight
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2 mt-2">
+                <Button type="submit" disabled={!promptText.trim()} className="flex p-2 px-3 gap-2 items-center">
+                  <Send className="w-3 h-3" />
+                  Apply Changes
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setPromptText('')} className="p-2 px-3">
+                  Cancel
+                </Button>
+              </div>
+              <p className="text-[10px] text-muted-foreground">Costs 1 prompt. Don't forget to save changes.</p>
+            </div>
+          </form>
+        ) : activeTab === 'CODE' ? (
+          <div className="flex flex-col h-full gap-3">
+            <Textarea
+              value={codeText}
+              onChange={(e) => setCodeText(e.target.value)}
+              className="flex-1 font-mono text-xs resize-none bg-secondary/50 border-border rounded-lg p-3 min-h-[400px]"
+              spellCheck={false}
+            />
+            <div className="flex items-center justify-between border-t border-border py-2">
+              <span className="text-[10px] text-muted-foreground">No changes</span>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" disabled className="text-[10px] h-7 px-2">Reset</Button>
+                <Button disabled className="text-[10px] h-7 px-2">Apply</Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {/* Breakpoint Selector */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex border border-border rounded-md overflow-hidden h-6">
+                {['AUTO', '*', 'MD'].map((bp, i) => (
+                  <button 
+                    key={bp}
+                    className={`px-2 text-[9px] transition-[var(--transition-smooth)] ${
+                      bp === 'AUTO' ? 'bg-primary text-primary-foreground' : 
+                      bp === 'MD' ? 'bg-accent/20 text-accent-foreground' : 
+                      'bg-card text-muted-foreground hover:bg-secondary'
+                    } ${i > 0 ? 'border-l border-border' : ''}`}
+                  >
+                    {bp}
+                  </button>
+                ))}
+              </div>
+              <span className="text-[10px] text-muted-foreground ml-2 flex items-center gap-1">
+                <Laptop className="w-3 h-3" />
+                <span>Auto Breakpoint</span>
+              </span>
+            </div>
+
+            <Accordion type="multiple" value={openAccordions} onValueChange={setOpenAccordions} className="space-y-1">
+              {/* Family Elements */}
+              <AccordionItem value="family" className="border-none">
+                <AccordionTrigger className="py-1.5 text-xs font-medium text-muted-foreground hover:no-underline">
+                  Family Elements
+                </AccordionTrigger>
+                <AccordionContent className="pb-2">
+                  <div className="flex flex-wrap items-center gap-1">
+                    {['div', '├', 'div', 'div', 'p'].map((el, i) => (
+                      el === '├' ? (
+                        <span key={i} className="text-muted-foreground text-[10px]">{el}</span>
+                      ) : (
+                        <Button key={i} variant="outline" size="sm" className="h-6 text-[11px] px-1.5 py-0.5">{el}</Button>
+                      )
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Link */}
+              <AccordionItem value="link" className="border-none">
+                <AccordionTrigger className="py-1.5 text-xs font-medium text-muted-foreground hover:no-underline">
+                  Link
+                </AccordionTrigger>
+                <AccordionContent className="pb-2">
+                  <Input type="text" placeholder="/page or url..." className="h-8 text-xs" />
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Text Content */}
+              <AccordionItem value="text" className="border-none">
+                <AccordionTrigger className="py-1.5 text-xs font-medium text-muted-foreground hover:no-underline">
+                  Text Content
+                </AccordionTrigger>
+                <AccordionContent className="pb-2">
+                  <Textarea placeholder="Enter text content..." rows={1} className="resize-none text-xs" defaultValue="Layers" />
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Tailwind Classes */}
+              <AccordionItem value="tailwind" className="border-none">
+                <AccordionTrigger className="py-1.5 text-xs font-medium text-muted-foreground hover:no-underline">
+                  Tailwind Classes
+                </AccordionTrigger>
+                <AccordionContent className="pb-2">
+                  <Textarea
+                    placeholder="Enter Tailwind classes..."
+                    rows={1}
+                    className="resize-none text-xs opacity-50 cursor-not-allowed"
+                    disabled
+                    defaultValue="px-2 pb-3 text-[18px] md:text-[20px] font-semibold tracking-tight"
+                  />
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Inline CSS */}
+              <AccordionItem value="inline-css" className="border-none">
+                <AccordionTrigger className="py-1.5 text-xs font-medium text-muted-foreground hover:no-underline">
+                  <div className="flex items-center gap-1.5">
+                    <span>Inline CSS</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-2">
+                  <Textarea
+                    placeholder="color: red; font-size: 16px;"
+                    value={inlineCSS}
+                    onChange={(e) => setInlineCSS(e.target.value)}
+                    rows={2}
+                    className="resize-none text-xs font-mono"
+                  />
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Element ID */}
+              <AccordionItem value="element-id" className="border-none">
+                <AccordionTrigger className="py-1.5 text-xs font-medium text-muted-foreground hover:no-underline">
+                  <div className="flex items-center gap-1.5">
+                    <Hash className="w-3 h-3" />
+                    <span>Element ID</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-2">
+                  <Input 
+                    type="text" 
+                    placeholder="unique-element-id" 
+                    value={elementId}
+                    onChange={(e) => setElementId(e.target.value)}
+                    className="h-8 text-xs font-mono" 
+                  />
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Margin */}
+              <AccordionItem value="margin" className="border-none">
+                <AccordionTrigger className="py-1.5 text-xs font-medium text-muted-foreground hover:no-underline">
+                  <div className="flex items-center gap-1.5">
+                    <Scan className="w-3 h-3" />
+                    <span>Margin</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <IconInput icon={<UnfoldHorizontal className="w-3 h-3" />} />
+                    <IconInput icon={<UnfoldVertical className="w-3 h-3" />} />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Padding */}
+              <AccordionItem value="padding" className="border-none">
+                <AccordionTrigger className="py-1.5 text-xs font-medium text-muted-foreground hover:no-underline">
+                  <div className="flex items-center gap-1.5">
+                    <Square className="w-3 h-3" />
+                    <span>Padding</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-2">
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <LabeledInput label="L" defaultValue="2" />
+                      <LabeledInput label="T" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <LabeledInput label="R" defaultValue="2" />
+                      <LabeledInput label="B" defaultValue="3" />
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Position */}
+              <AccordionItem value="position" className="border-none">
+                <AccordionTrigger className="py-1.5 text-xs font-medium text-muted-foreground hover:no-underline">
+                  <div className="flex items-center gap-1.5">
+                    <GripVertical className="w-3 h-3" />
+                    <span>Position</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-2 space-y-2">
+                  <Select defaultValue="relative">
+                    <SelectTrigger className="h-7 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {['static', 'relative', 'absolute', 'fixed', 'sticky'].map(pos => (
+                        <SelectItem key={pos} value={pos}>{pos.charAt(0).toUpperCase() + pos.slice(1)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="grid grid-cols-2 gap-2">
+                    <LabeledInput label="L" />
+                    <LabeledInput label="T" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <LabeledInput label="R" />
+                    <LabeledInput label="B" />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Size */}
+              <AccordionItem value="size" className="border-none">
+                <AccordionTrigger className="py-1.5 text-xs font-medium text-muted-foreground hover:no-underline">
+                  Size
+                </AccordionTrigger>
+                <AccordionContent className="pb-2 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <IconInput icon={<UnfoldHorizontal className="w-3 h-3" />} placeholder="Width" />
+                    <IconInput icon={<UnfoldVertical className="w-3 h-3" />} placeholder="Height" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <LabeledInput label="Max W" />
+                    <LabeledInput label="Max H" />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Spacing */}
+              <AccordionItem value="spacing" className="border-none">
+                <AccordionTrigger className="py-1.5 text-xs font-medium text-muted-foreground hover:no-underline">
+                  Spacing
+                </AccordionTrigger>
+                <AccordionContent className="pb-2 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <LabeledInput label="Space X" />
+                    <LabeledInput label="Space Y" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <LabeledInput label="Gap X" />
+                    <LabeledInput label="Gap Y" />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Alignment */}
+              <AccordionItem value="alignment" className="border-none">
+                <AccordionTrigger className="py-1.5 text-xs font-medium text-muted-foreground hover:no-underline">
+                  <div className="flex items-center gap-1.5">
+                    <AlignHorizontalJustifyCenter className="w-3 h-3" />
+                    <span>Alignment</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-2 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Select defaultValue="default">
+                      <SelectTrigger className="h-7 text-xs">
+                        <SelectValue placeholder="Justify" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['Default', 'Start', 'Center', 'End', 'Between', 'Around', 'Evenly'].map(v => (
+                          <SelectItem key={v} value={v.toLowerCase()}>{v}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select defaultValue="default">
+                      <SelectTrigger className="h-7 text-xs">
+                        <SelectValue placeholder="Align" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['Default', 'Start', 'Center', 'End', 'Stretch', 'Baseline'].map(v => (
+                          <SelectItem key={v} value={v.toLowerCase()}>{v}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Typography */}
+              <AccordionItem value="typography" className="border-none">
+                <AccordionTrigger className="py-1.5 text-xs font-medium text-muted-foreground hover:no-underline">
+                  Typography
+                </AccordionTrigger>
+                <AccordionContent className="pb-2 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Select defaultValue="inter">
+                      <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="inter">Inter</SelectItem>
+                        <SelectItem value="roboto">Roboto</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select defaultValue="default">
+                      <SelectTrigger className="h-7 text-xs opacity-30"><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="default">Default</SelectItem></SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Select defaultValue="semibold">
+                      <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="semibold">Semibold</SelectItem>
+                        <SelectItem value="bold">Bold</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select defaultValue="tight">
+                      <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="tight">Tight</SelectItem>
+                        <SelectItem value="normal">Normal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <ColorButton color={textColor} onChange={setTextColor} label="Color" />
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Appearance */}
+              <AccordionItem value="appearance" className="border-none">
+                <AccordionTrigger className="py-1.5 text-xs font-medium text-muted-foreground hover:no-underline">
+                  <div className="flex items-center gap-1.5">
+                    <Eye className="w-3 h-3" />
+                    <span>Appearance</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-2 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Select defaultValue="opacity">
+                      <SelectTrigger className="h-7 text-xs opacity-30"><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="opacity">Opacity</SelectItem></SelectContent>
+                    </Select>
+                    <Select defaultValue="blend">
+                      <SelectTrigger className="h-7 text-xs opacity-30"><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="blend">Blend</SelectItem></SelectContent>
+                    </Select>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Background */}
+              <AccordionItem value="background" className="border-none">
+                <AccordionTrigger className="py-1.5 text-xs font-medium text-muted-foreground hover:no-underline">
+                  Background
+                </AccordionTrigger>
+                <AccordionContent className="pb-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <ColorButton color={bgColor} onChange={setBgColor} label="Color" />
+                    <button className="h-7 flex items-center gap-2 px-2 py-1 text-xs rounded-md border border-border bg-card opacity-30">
+                      <div className="w-4 h-4 rounded border border-border bg-muted flex items-center justify-center">
+                        <Image className="w-2.5 h-2.5 text-muted-foreground" />
+                      </div>
+                      <span className="text-xs truncate">No Image</span>
+                    </button>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Embed */}
+              <AccordionItem value="embed" className="border-none">
+                <AccordionTrigger className="py-1.5 text-xs font-medium text-muted-foreground hover:no-underline">
+                  Embed
+                </AccordionTrigger>
+                <AccordionContent className="pb-2">
+                  <button className="w-full h-7 flex items-center gap-2 px-2 py-1 text-xs rounded-md border border-border bg-card opacity-30">
+                    <Layers className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-xs truncate">No Asset</span>
+                  </button>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Border */}
+              <AccordionItem value="border" className="border-none">
+                <AccordionTrigger className="py-1.5 text-xs font-medium text-muted-foreground hover:no-underline">
+                  Border
+                </AccordionTrigger>
+                <AccordionContent className="pb-2 space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <ColorButton color={borderColor} onChange={setBorderColor} label="Border" />
+                    <ColorButton color={ringColor} onChange={setRingColor} label="Ring" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-muted-foreground mb-1.5 block">Rounded</span>
+                    <Tabs value={borderRadiusTab} onValueChange={(v) => setBorderRadiusTab(v as typeof borderRadiusTab)} className="w-full">
+                      <TabsList className="grid grid-cols-5 h-7">
+                        {['all', 't', 'r', 'b', 'l'].map(tab => (
+                          <TabsTrigger key={tab} value={tab} className="text-[10px] px-2">{tab.toUpperCase()}</TabsTrigger>
+                        ))}
+                      </TabsList>
+                    </Tabs>
+                    <SliderControl
+                      icon={<Circle className="w-2.5 h-2.5" />}
+                      label={`Radius ${borderRadiusTab.toUpperCase()}`}
+                      value={borderRadius[borderRadiusTab]}
+                      onChange={(v) => setBorderRadius(prev => ({ ...prev, [borderRadiusTab]: v }))}
+                      min={0}
+                      max={50}
+                      unit="px"
+                    />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Effects */}
+              <AccordionItem value="effects" className="border-none">
+                <AccordionTrigger className="py-1.5 text-xs font-medium text-muted-foreground hover:no-underline">
+                  Effects
+                </AccordionTrigger>
+                <AccordionContent className="pb-2 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Select defaultValue="none">
+                      <SelectTrigger className="h-7 text-xs opacity-30"><SelectValue placeholder="Shadow" /></SelectTrigger>
+                      <SelectContent>
+                        {['None', 'SM', 'MD', 'LG', 'XL', '2XL'].map(v => (
+                          <SelectItem key={v} value={v.toLowerCase()}>{v}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <SliderControl icon={<Droplet className="w-2.5 h-2.5" />} label="Blur" value={blur} onChange={setBlur} min={0} max={100} unit="px" />
+                  <SliderControl icon={<Droplet className="w-2.5 h-2.5" />} label="Backdrop Blur" value={backdropBlur} onChange={setBackdropBlur} min={0} max={100} unit="px" />
+                  <SliderControl icon={<Contrast className="w-2.5 h-2.5" />} label="Hue Rotate" value={hueRotate} onChange={setHueRotate} min={0} max={360} unit="°" />
+                  <SliderControl icon={<Sun className="w-2.5 h-2.5" />} label="Saturation" value={saturation} onChange={setSaturation} min={0} max={200} unit="%" />
+                  <SliderControl icon={<Sun className="w-2.5 h-2.5" />} label="Brightness" value={brightness} onChange={setBrightness} min={0} max={200} unit="%" />
+                  <SliderControl icon={<FlipHorizontal className="w-2.5 h-2.5" />} label="Grayscale" value={grayscale} onChange={setGrayscale} min={0} max={100} unit="%" />
+                  <SliderControl icon={<FlipHorizontal className="w-2.5 h-2.5" />} label="Invert" value={invert} onChange={setInvert} min={0} max={100} unit="%" />
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Transforms */}
+              <AccordionItem value="transforms" className="border-none">
+                <AccordionTrigger className="py-1.5 text-xs font-medium text-muted-foreground hover:no-underline">
+                  Transforms
+                </AccordionTrigger>
+                <AccordionContent className="pb-2 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <SliderControl icon={<Move className="w-2.5 h-2.5" />} label="Translate X" value={translateX} onChange={setTranslateX} min={-200} max={200} unit="" />
+                    <SliderControl icon={<Move className="w-2.5 h-2.5" />} label="Translate Y" value={translateY} onChange={setTranslateY} min={-200} max={200} unit="" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <SliderControl icon={<Zap className="w-2.5 h-2.5" />} label="Skew X" value={skewX} onChange={setSkewX} min={-45} max={45} unit="°" />
+                    <SliderControl icon={<Zap className="w-2.5 h-2.5" />} label="Skew Y" value={skewY} onChange={setSkewY} min={-45} max={45} unit="°" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <SliderControl icon={<RotateCw className="w-2.5 h-2.5" />} label="Rotate" value={rotate} onChange={setRotate} min={-180} max={180} unit="°" />
+                    <SliderControl icon={<Maximize className="w-2.5 h-2.5" />} label="Scale" value={scale} onChange={setScale} min={0} max={200} unit="%" />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* 3D Transform */}
+              <AccordionItem value="3d-transform" className="border-none">
+                <AccordionTrigger className="py-1.5 text-xs font-medium text-muted-foreground hover:no-underline">
+                  3D Transform
+                </AccordionTrigger>
+                <AccordionContent className="pb-2 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <SliderControl icon={<RotateCw className="w-2.5 h-2.5" />} label="3D Rotate X" value={rotateX} onChange={setRotateX} min={-180} max={180} unit="°" />
+                    <SliderControl icon={<RotateCw className="w-2.5 h-2.5" />} label="3D Rotate Y" value={rotateY} onChange={setRotateY} min={-180} max={180} unit="°" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <SliderControl icon={<RotateCw className="w-2.5 h-2.5" />} label="3D Rotate Z" value={rotateZ} onChange={setRotateZ} min={-180} max={180} unit="°" />
+                    <SliderControl 
+                      icon={<Maximize className="w-2.5 h-2.5" />} 
+                      label="Perspective" 
+                      value={perspective} 
+                      onChange={setPerspective} 
+                      min={0} 
+                      max={6} 
+                      unit=""
+                      valueLabel={perspective === 0 ? "Default" : perspective.toString()}
+                    />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Helper Components
+const IconInput = ({ icon, placeholder }: { icon: React.ReactNode; placeholder?: string }) => (
+  <div className="relative">
+    <div className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none opacity-30">
+      {icon}
+    </div>
+    <Input type="text" placeholder={placeholder} className="h-8 text-xs pl-8" />
+  </div>
+);
+
+const LabeledInput = ({ label, defaultValue }: { label: string; defaultValue?: string }) => (
+  <div className="relative">
+    <span className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-xs font-light text-foreground pointer-events-none ${!defaultValue ? 'opacity-30' : ''}`}>
+      {label}
+    </span>
+    <Input type="text" defaultValue={defaultValue} className="h-8 text-xs pl-12" />
+  </div>
+);
+
+const SliderControl = ({ 
+  icon, 
+  label, 
+  value, 
+  onChange, 
+  min, 
+  max, 
+  unit,
+  valueLabel
+}: { 
+  icon: React.ReactNode; 
+  label: string; 
+  value: number; 
+  onChange: (value: number) => void;
+  min: number;
+  max: number;
+  unit: string;
+  valueLabel?: string;
+}) => (
+  <div className="-space-y-1.5">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-1">
+        {icon}
+        <span className="text-[10px] font-medium text-muted-foreground">{label}</span>
+      </div>
+      <span className="text-[10px] text-muted-foreground">
+        {valueLabel || `${value}${unit}`}
+      </span>
+    </div>
+    <input 
+      type="range" 
+      min={min} 
+      max={max} 
+      value={value}
+      onChange={(e) => onChange(Number(e.target.value))}
+      className="w-full h-1 bg-secondary rounded-lg appearance-none cursor-pointer slider-thumb" 
+    />
+  </div>
+);
+
+```
+```components/ThemeCustomizer.tsx
+import { useState } from 'react';
+import { Sun, Moon, Monitor, Square, Circle, RectangleHorizontal, Palette, Settings2, Sparkles, Layers, Download, Upload, RotateCcw } from 'lucide-react';
+import { Button } from './ui/button';
+import { Slider } from './ui/slider';
+import { Switch } from './ui/switch';
+import { HexColorPicker } from 'react-colorful';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
+import { useTheme, ThemeMode, ShapePreset, SolidStyle, EffectStyle, SurfaceStyle, DataStyle, TransitionStyle } from '@/contexts/ThemeContext';
+
+const hslToHex = (hsl: string): string => {
+  const [h, s, l] = hsl.split(' ').map(v => parseFloat(v));
+  const a = (s / 100) * Math.min(l / 100, 1 - l / 100);
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12;
+    const color = l / 100 - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+};
+
+const hexToHsl = (hex: string): string => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return '217 91% 60%';
+  let r = parseInt(result[1], 16) / 255;
+  let g = parseInt(result[2], 16) / 255;
+  let b = parseInt(result[3], 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+};
+
+export const ThemeCustomizer = () => {
+  const { theme, updateTheme, resetTheme } = useTheme();
+  const [openAccordions, setOpenAccordions] = useState<string[]>(['theme', 'shape', 'color']);
+
+  const ColorSwatch = ({ color, label, onChange }: { color: string; label: string; onChange: (val: string) => void }) => (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="flex flex-col items-center gap-1 group">
+          <div 
+            className="w-8 h-8 rounded-lg border border-border shadow-sm group-hover:ring-2 ring-primary/50 transition-all"
+            style={{ backgroundColor: `hsl(${color})` }}
+          />
+          <span className="text-[9px] text-muted-foreground">{label}</span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-3" align="start">
+        <HexColorPicker color={hslToHex(color)} onChange={(hex) => onChange(hexToHsl(hex))} />
+      </PopoverContent>
+    </Popover>
+  );
+
+  const ToggleGroup = <T extends string>({ 
+    options, 
+    value, 
+    onChange,
+    renderOption
+  }: { 
+    options: T[]; 
+    value: T; 
+    onChange: (val: T) => void;
+    renderOption?: (opt: T) => React.ReactNode;
+  }) => (
+    <div className="flex border border-border rounded-lg overflow-hidden">
+      {options.map((opt) => (
+        <button
+          key={opt}
+          onClick={() => onChange(opt)}
+          className={`flex-1 px-3 py-1.5 text-[10px] font-medium transition-colors ${
+            value === opt 
+              ? 'bg-primary text-primary-foreground' 
+              : 'bg-card text-muted-foreground hover:bg-secondary'
+          }`}
+        >
+          {renderOption ? renderOption(opt) : opt.charAt(0).toUpperCase() + opt.slice(1)}
+        </button>
+      ))}
+    </div>
+  );
+
+  const exportTheme = () => {
+    const blob = new Blob([JSON.stringify(theme, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'theme-config.json';
+    a.click();
+  };
+
+  const importTheme = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const imported = JSON.parse(ev.target?.result as string);
+            updateTheme(imported);
+          } catch (err) {
+            console.error('Invalid theme file');
+          }
+        };
+        reader.readAsText(file);
+      }
+    };
+    input.click();
+  };
+
+  return (
+    <div className="bg-card border border-border rounded-2xl shadow-[var(--shadow-panel)] w-80 max-h-[600px] flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-border py-2 px-4 bg-secondary/50 rounded-t-2xl flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <Palette className="w-4 h-4 text-primary" />
+          <h3 className="text-xs font-semibold text-foreground">Theme Customizer</h3>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={importTheme} title="Import">
+            <Upload className="w-3 h-3" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={exportTheme} title="Export">
+            <Download className="w-3 h-3" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={resetTheme} title="Reset">
+            <RotateCcw className="w-3 h-3" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-3 overflow-y-auto flex-1">
+        <Accordion type="multiple" value={openAccordions} onValueChange={setOpenAccordions} className="space-y-2">
+          {/* Theme Mode */}
+          <AccordionItem value="theme" className="border border-border rounded-lg px-3">
+            <AccordionTrigger className="py-2 text-xs font-medium hover:no-underline">
+              <div className="flex items-center gap-2">
+                <Sun className="w-3.5 h-3.5" />
+                Theme
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pb-3">
+              <div className="flex gap-2">
+                {[
+                  { mode: 'light' as ThemeMode, icon: Sun, label: 'Light' },
+                  { mode: 'dark' as ThemeMode, icon: Moon, label: 'Dark' },
+                  { mode: 'system' as ThemeMode, icon: Monitor, label: 'System' },
+                ].map(({ mode, icon: Icon, label }) => (
+                  <button
+                    key={mode}
+                    onClick={() => updateTheme({ mode })}
+                    className={`flex-1 flex flex-col items-center gap-1 p-2 rounded-lg border transition-colors ${
+                      theme.mode === mode 
+                        ? 'border-primary bg-primary/10' 
+                        : 'border-border hover:bg-secondary'
+                    }`}
+                  >
+                    <Icon className={`w-4 h-4 ${theme.mode === mode ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <span className="text-[10px]">{label}</span>
+                  </button>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Shape */}
+          <AccordionItem value="shape" className="border border-border rounded-lg px-3">
+            <AccordionTrigger className="py-2 text-xs font-medium hover:no-underline">
+              <div className="flex items-center gap-2">
+                <Square className="w-3.5 h-3.5" />
+                Shape
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pb-3">
+              <div className="flex gap-2">
+                {[
+                  { shape: 'sharp' as ShapePreset, icon: Square, label: 'Sharp' },
+                  { shape: 'rounded' as ShapePreset, icon: RectangleHorizontal, label: 'Rounded' },
+                  { shape: 'full' as ShapePreset, icon: Circle, label: 'Full' },
+                ].map(({ shape, icon: Icon, label }) => (
+                  <button
+                    key={shape}
+                    onClick={() => updateTheme({ shape })}
+                    className={`flex-1 flex flex-col items-center gap-1 p-2 rounded-lg border transition-colors ${
+                      theme.shape === shape 
+                        ? 'border-primary bg-primary/10' 
+                        : 'border-border hover:bg-secondary'
+                    }`}
+                  >
+                    <Icon className={`w-4 h-4 ${theme.shape === shape ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <span className="text-[10px]">{label}</span>
+                  </button>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Colors */}
+          <AccordionItem value="color" className="border border-border rounded-lg px-3">
+            <AccordionTrigger className="py-2 text-xs font-medium hover:no-underline">
+              <div className="flex items-center gap-2">
+                <Palette className="w-3.5 h-3.5" />
+                Color
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pb-3 space-y-3">
+              <div>
+                <span className="text-[10px] text-muted-foreground mb-2 block">Brand</span>
+                <div className="flex gap-3">
+                  <ColorSwatch 
+                    color={theme.colors.primary} 
+                    label="Primary" 
+                    onChange={(val) => updateTheme({ colors: { ...theme.colors, primary: val } })}
+                  />
+                  <ColorSwatch 
+                    color={theme.colors.accent} 
+                    label="Accent" 
+                    onChange={(val) => updateTheme({ colors: { ...theme.colors, accent: val } })}
+                  />
+                </div>
+              </div>
+              <div>
+                <span className="text-[10px] text-muted-foreground mb-2 block">Neutral</span>
+                <ToggleGroup 
+                  options={['slate', 'gray', 'zinc'] as const}
+                  value={theme.colors.neutral}
+                  onChange={(val) => updateTheme({ colors: { ...theme.colors, neutral: val } })}
+                />
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Solid Style */}
+          <AccordionItem value="solid" className="border border-border rounded-lg px-3">
+            <AccordionTrigger className="py-2 text-xs font-medium hover:no-underline">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5" />
+                Solid Style
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pb-3 space-y-3">
+              <div>
+                <span className="text-[10px] text-muted-foreground mb-2 block">Style</span>
+                <ToggleGroup 
+                  options={['color', 'inverse', 'contrast'] as SolidStyle[]}
+                  value={theme.solidStyle}
+                  onChange={(val) => updateTheme({ solidStyle: val })}
+                />
+              </div>
+              <div>
+                <span className="text-[10px] text-muted-foreground mb-2 block">Effect</span>
+                <ToggleGroup 
+                  options={['flat', 'plastic'] as EffectStyle[]}
+                  value={theme.effectStyle}
+                  onChange={(val) => updateTheme({ effectStyle: val })}
+                />
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Effects */}
+          <AccordionItem value="effects" className="border border-border rounded-lg px-3">
+            <AccordionTrigger className="py-2 text-xs font-medium hover:no-underline">
+              <div className="flex items-center gap-2">
+                <Layers className="w-3.5 h-3.5" />
+                Effects
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pb-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-medium">Depth Effect</span>
+                  <p className="text-[9px] text-muted-foreground">3D depth on fields</p>
+                </div>
+                <Switch 
+                  checked={theme.depthEffect} 
+                  onCheckedChange={(val) => updateTheme({ depthEffect: val })} 
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-medium">Noise Effect</span>
+                  <p className="text-[9px] text-muted-foreground">Noise pattern on fields</p>
+                </div>
+                <Switch 
+                  checked={theme.noiseEffect} 
+                  onCheckedChange={(val) => updateTheme({ noiseEffect: val })} 
+                />
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Advanced */}
+          <AccordionItem value="advanced" className="border border-border rounded-lg px-3">
+            <AccordionTrigger className="py-2 text-xs font-medium hover:no-underline">
+              <div className="flex items-center gap-2">
+                <Settings2 className="w-3.5 h-3.5" />
+                Advanced
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pb-3 space-y-4">
+              <div>
+                <span className="text-[10px] text-muted-foreground mb-2 block">Surface</span>
+                <ToggleGroup 
+                  options={['filled', 'translucent'] as SurfaceStyle[]}
+                  value={theme.surface}
+                  onChange={(val) => updateTheme({ surface: val })}
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] text-muted-foreground">Scaling</span>
+                  <span className="text-[10px] font-medium">{theme.scaling}%</span>
+                </div>
+                <Slider 
+                  value={[theme.scaling]} 
+                  onValueChange={([val]) => updateTheme({ scaling: val })}
+                  min={90}
+                  max={110}
+                  step={5}
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <span className="text-[10px] text-muted-foreground mb-2 block">Data Style</span>
+                <ToggleGroup 
+                  options={['categorical', 'divergent', 'sequential'] as DataStyle[]}
+                  value={theme.dataStyle}
+                  onChange={(val) => updateTheme({ dataStyle: val })}
+                  renderOption={(opt) => opt.slice(0, 3).toUpperCase()}
+                />
+              </div>
+              <div>
+                <span className="text-[10px] text-muted-foreground mb-2 block">Transition</span>
+                <ToggleGroup 
+                  options={['all', 'micro', 'macro', 'none'] as TransitionStyle[]}
+                  value={theme.transition}
+                  onChange={(val) => updateTheme({ transition: val })}
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] text-muted-foreground">Border Width</span>
+                  <span className="text-[10px] font-medium">{theme.borderWidth}px</span>
+                </div>
+                <Slider 
+                  value={[theme.borderWidth]} 
+                  onValueChange={([val]) => updateTheme({ borderWidth: val })}
+                  min={0}
+                  max={4}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Sizes */}
+          <AccordionItem value="sizes" className="border border-border rounded-lg px-3">
+            <AccordionTrigger className="py-2 text-xs font-medium hover:no-underline">
+              <div className="flex items-center gap-2">
+                <RectangleHorizontal className="w-3.5 h-3.5" />
+                Sizes
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pb-3 space-y-4">
+              <div>
+                <span className="text-[10px] text-muted-foreground mb-2 block">Fields (button, input, select, tab)</span>
+                <div className="flex gap-1 mb-2">
+                  {['xs', 'sm', 'md', 'lg', 'xl'].map((size, i) => (
+                    <div key={size} className="flex-1 text-center">
+                      <div className="text-[9px] text-muted-foreground mb-1">{size}</div>
+                      <div className="text-[10px] font-mono">{24 + i * 8}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] text-muted-foreground">Base Size</span>
+                  <span className="text-[10px] font-medium">{theme.fieldBaseSize.toFixed(1)}px</span>
+                </div>
+                <Slider 
+                  value={[theme.fieldBaseSize]} 
+                  onValueChange={([val]) => updateTheme({ fieldBaseSize: val })}
+                  min={2}
+                  max={8}
+                  step={0.5}
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <span className="text-[10px] text-muted-foreground mb-2 block">Selectors (checkbox, toggle, badge)</span>
+                <div className="flex gap-1 mb-2">
+                  {['xs', 'sm', 'md', 'lg', 'xl'].map((size, i) => (
+                    <div key={size} className="flex-1 text-center">
+                      <div className="text-[9px] text-muted-foreground mb-1">{size}</div>
+                      <div className="text-[10px] font-mono">{16 + i * 4}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] text-muted-foreground">Base Size</span>
+                  <span className="text-[10px] font-medium">{theme.selectorBaseSize.toFixed(1)}px</span>
+                </div>
+                <Slider 
+                  value={[theme.selectorBaseSize]} 
+                  onValueChange={([val]) => updateTheme({ selectorBaseSize: val })}
+                  min={2}
+                  max={8}
+                  step={0.5}
+                  className="w-full"
+                />
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </div>
+    </div>
+  );
+};
+
+```
+```index.css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 220 9% 20%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 9% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 9% 20%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 13% 95%;
+    --secondary-foreground: 220 9% 20%;
+
+    --muted: 220 13% 95%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 217 91% 60%;
+
+    --radius: 0.5rem;
+
+    /* Editor specific tokens */
+    --editor-bg: 222 47% 11%;
+    --editor-panel: 0 0% 100%;
+    --editor-panel-dark: 220 9% 98%;
+    --editor-border: 220 13% 91%;
+    --editor-text: 220 9% 20%;
+    --editor-text-muted: 220 9% 46%;
+    --editor-input: 0 0% 100%;
+    --editor-button-active: 217 91% 60%;
+    --editor-button-hover: 220 13% 95%;
+    
+    --gradient-editor: linear-gradient(135deg, hsl(222 47% 11%), hsl(215 28% 17%));
+    --shadow-panel: 0 10px 40px -10px hsl(220 9% 20% / 0.1);
+    --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    --background: 220 15% 10%;
+    --foreground: 220 9% 95%;
+
+    --card: 220 15% 15%;
+    --card-foreground: 220 9% 95%;
+
+    --popover: 220 15% 15%;
+    --popover-foreground: 220 9% 95%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 15% 20%;
+    --secondary-foreground: 220 9% 95%;
+
+    --muted: 220 15% 20%;
+    --muted-foreground: 220 9% 65%;
+
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 20%;
+    --input: 220 15% 20%;
+    --ring: 217 91% 60%;
+
+    /* Editor specific tokens - dark mode */
+    --editor-bg: 222 47% 11%;
+    --editor-panel: 220 15% 15%;
+    --editor-panel-dark: 220 15% 12%;
+    --editor-border: 220 15% 20%;
+    --editor-text: 220 9% 95%;
+    --editor-text-muted: 220 9% 65%;
+    --editor-input: 220 15% 15%;
+    --editor-button-active: 217 91% 60%;
+    --editor-button-hover: 220 15% 20%;
+    
+    --gradient-editor: linear-gradient(135deg, hsl(222 47% 11%), hsl(215 28% 17%));
+    --shadow-panel: 0 10px 40px -10px hsl(0 0% 0% / 0.3);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /* Custom slider styling */
+  input[type="range"].slider-thumb::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: hsl(var(--primary));
+    cursor: pointer;
+    transition: var(--transition-smooth);
+  }
+
+  input[type="range"].slider-thumb::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+  }
+
+  input[type="range"].slider-thumb::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: hsl(var(--primary));
+    cursor: pointer;
+    border: none;
+    transition: var(--transition-smooth);
+  }
+
+  input[type="range"].slider-thumb::-moz-range-thumb:hover {
+    transform: scale(1.2);
+  }
+}
+
+```
+```tailwind.config.ts
+import type { Config } from "tailwindcss";
+
+export default {
+  darkMode: ["class"],
+  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
+  prefix: "",
+  theme: {
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: {
+        "2xl": "1400px",
+      },
+    },
+    extend: {
+      colors: {
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar-background))",
+          foreground: "hsl(var(--sidebar-foreground))",
+          primary: "hsl(var(--sidebar-primary))",
+          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
+          accent: "hsl(var(--sidebar-accent))",
+          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
+          border: "hsl(var(--sidebar-border))",
+          ring: "hsl(var(--sidebar-ring))",
+        },
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+      keyframes: {
+        "accordion-down": {
+          from: {
+            height: "0",
+          },
+          to: {
+            height: "var(--radix-accordion-content-height)",
+          },
+        },
+        "accordion-up": {
+          from: {
+            height: "var(--radix-accordion-content-height)",
+          },
+          to: {
+            height: "0",
+          },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+      },
+    },
+  },
+  plugins: [require("tailwindcss-animate")],
+} satisfies Config;
+
+```
+```index.html
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visual Editor - Property Inspector</title>
+    <meta name="description" content="A sophisticated property inspector interface for visual editing" />
+    <meta name="author" content="Lovable" />
+
+    <meta property="og:title" content="Visual Editor - Property Inspector" />
+    <meta property="og:description" content="A sophisticated property inspector interface for visual editing" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@lovable_dev" />
+    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+```
