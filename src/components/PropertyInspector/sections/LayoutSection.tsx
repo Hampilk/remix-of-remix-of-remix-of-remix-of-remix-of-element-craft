@@ -39,11 +39,11 @@ interface LayoutSectionProps {
 
 const SPACING_PRESETS = [
   { label: 'None', value: '0' },
-  { label: 'XS', value: '4' },
-  { label: 'SM', value: '8' },
-  { label: 'MD', value: '16' },
-  { label: 'LG', value: '24' },
-  { label: 'XL', value: '32' },
+  { label: 'XS', value: '4px' },
+  { label: 'SM', value: '8px' },
+  { label: 'MD', value: '16px' },
+  { label: 'LG', value: '24px' },
+  { label: 'XL', value: '32px' },
 ] as const;
 
 const SIZE_PRESETS = [
@@ -62,16 +62,6 @@ function isValidCssValue(value: string): boolean {
   return /^(auto|fit-content|min-content|max-content|\d+\.?\d*(px|rem|em|%|vh|vw)?)$/.test(value.trim());
 }
 
-// Extract numeric-only value (remove units) for storing in state
-function normalizeNumericValue(value: string): string {
-  const trimmed = value.trim();
-  if (trimmed === '' || trimmed === 'auto' || trimmed === '0') return trimmed;
-  // Extract just the number part
-  const match = trimmed.match(/^([\d.-]+)/);
-  return match ? match[1] : trimmed;
-}
-
-// Format value for display (add units back if numeric)
 function sanitizeCssValue(value: string): string {
   const trimmed = value.trim();
   if (trimmed === '' || trimmed === 'auto') return trimmed;
@@ -115,13 +105,8 @@ interface PaddingSectionProps {
 
 const PaddingSection = memo<PaddingSectionProps>(({ padding, onPaddingChange }) => {
   const activeCount = useMemo(() => {
-    return Object.values(padding).filter(v => v && v !== '0').length;
+    return Object.values(padding).filter(v => v && v !== '0' && v !== '0px').length;
   }, [padding]);
-
-  const handlePaddingChange = useCallback((key: keyof SpacingValue, value: string) => {
-    const normalized = normalizeNumericValue(value);
-    onPaddingChange(key, normalized);
-  }, [onPaddingChange]);
 
   return (
     <AccordionItem value="padding-section" className="border-none">
@@ -129,7 +114,7 @@ const PaddingSection = memo<PaddingSectionProps>(({ padding, onPaddingChange }) 
         <SectionHeader icon={<Square className="w-3 h-3" />} title="Padding" badge={activeCount > 0 ? activeCount : undefined} />
       </AccordionTrigger>
       <AccordionContent className="pb-2 space-y-2">
-        <SpacingGrid values={padding} onChange={handlePaddingChange} />
+        <SpacingGrid values={padding} onChange={onPaddingChange} />
         <div className="flex flex-wrap gap-1">
           <span className="text-[9px] text-muted-foreground w-full mb-0.5">Quick:</span>
           {SPACING_PRESETS.map(preset => (
@@ -137,10 +122,10 @@ const PaddingSection = memo<PaddingSectionProps>(({ padding, onPaddingChange }) 
               key={preset.label}
               type="button"
               onClick={() => {
-                handlePaddingChange('l', preset.value);
-                handlePaddingChange('t', preset.value);
-                handlePaddingChange('r', preset.value);
-                handlePaddingChange('b', preset.value);
+                onPaddingChange('l', preset.value);
+                onPaddingChange('t', preset.value);
+                onPaddingChange('r', preset.value);
+                onPaddingChange('b', preset.value);
               }}
               className="px-1.5 py-0.5 text-[9px] rounded bg-secondary hover:bg-secondary/80 transition-colors"
             >
@@ -163,9 +148,9 @@ interface MarginSectionProps {
 
 const MarginSection = memo<MarginSectionProps>(({ margin, onMarginChange }) => {
   const handleChange = useCallback((key: keyof MarginValue, value: string) => {
-    const normalized = normalizeNumericValue(value);
-    if (isValidCssValue(normalized || '0')) {
-      onMarginChange(key, normalized);
+    const sanitized = sanitizeCssValue(value);
+    if (isValidCssValue(sanitized)) {
+      onMarginChange(key, sanitized);
     }
   }, [onMarginChange]);
 
@@ -194,22 +179,9 @@ interface SizeSectionProps {
 
 const SizeSection = memo<SizeSectionProps>(({ size, onSizeChange }) => {
   const handleChange = useCallback((key: keyof SizeValue, value: string) => {
-    // For size, preserve percentages and other units, but extract numbers from px
-    const trimmed = value.trim();
-    let normalized = trimmed;
-
-    if (trimmed === '' || trimmed === 'auto' || trimmed === 'fit-content' || trimmed === 'min-content' || trimmed === 'max-content') {
-      normalized = trimmed;
-    } else if (trimmed.includes('%') || trimmed.includes('rem') || trimmed.includes('em') || trimmed.includes('vh') || trimmed.includes('vw')) {
-      // Keep special units as-is
-      normalized = trimmed;
-    } else {
-      // For px values, normalize to numeric only
-      normalized = normalizeNumericValue(trimmed);
-    }
-
-    if (isValidCssValue(normalized)) {
-      onSizeChange(key, normalized);
+    const sanitized = sanitizeCssValue(value);
+    if (isValidCssValue(sanitized)) {
+      onSizeChange(key, sanitized);
     }
   }, [onSizeChange]);
 
@@ -272,11 +244,6 @@ interface PositionSectionProps {
 const PositionSection = memo<PositionSectionProps>(({ position, onPositionChange }) => {
   const isPositioned = useMemo(() => position.type !== 'static' && position.type !== 'relative', [position.type]);
 
-  const handleOffsetChange = useCallback((key: keyof PositionValue, value: string) => {
-    const normalized = normalizeNumericValue(value);
-    onPositionChange(key, normalized);
-  }, [onPositionChange]);
-
   return (
     <AccordionItem value="position-section" className="border-none">
       <AccordionTrigger className="py-1.5 text-xs font-medium text-muted-foreground hover:no-underline">
@@ -292,15 +259,15 @@ const PositionSection = memo<PositionSectionProps>(({ position, onPositionChange
             <div className="space-y-1">
               <label className="text-[10px] text-muted-foreground block">Offsets</label>
               <div className="grid grid-cols-2 gap-2">
-                <LabeledInput label="Left" value={position.l} onChange={(v) => handleOffsetChange('l', v)} placeholder="auto" />
-                <LabeledInput label="Top" value={position.t} onChange={(v) => handleOffsetChange('t', v)} placeholder="auto" />
-                <LabeledInput label="Right" value={position.r} onChange={(v) => handleOffsetChange('r', v)} placeholder="auto" />
-                <LabeledInput label="Bottom" value={position.b} onChange={(v) => handleOffsetChange('b', v)} placeholder="auto" />
+                <LabeledInput label="Left" value={position.l} onChange={(v) => onPositionChange('l', v)} placeholder="auto" />
+                <LabeledInput label="Top" value={position.t} onChange={(v) => onPositionChange('t', v)} placeholder="auto" />
+                <LabeledInput label="Right" value={position.r} onChange={(v) => onPositionChange('r', v)} placeholder="auto" />
+                <LabeledInput label="Bottom" value={position.b} onChange={(v) => onPositionChange('b', v)} placeholder="auto" />
               </div>
             </div>
             <div>
               <label className="text-[10px] text-muted-foreground block mb-1">Z-Index</label>
-              <LabeledInput label="Z" value={position.zIndex} onChange={(v) => handleOffsetChange('zIndex', v)} placeholder="auto" />
+              <LabeledInput label="Z" value={position.zIndex} onChange={(v) => onPositionChange('zIndex', v)} placeholder="auto" />
             </div>
           </>
         )}

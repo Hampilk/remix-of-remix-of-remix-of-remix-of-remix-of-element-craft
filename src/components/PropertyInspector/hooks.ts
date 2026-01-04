@@ -1,9 +1,8 @@
-// PropertyInspector Custom Hooks - FIXED VERSION
+// PropertyInspector Custom Hooks
 
 import { useState, useMemo, useCallback } from 'react';
 import type { InspectorState, Breakpoint } from './types';
 import { DEFAULT_INSPECTOR_STATE } from './constants';
-import { normalizeNumericValue } from './utils/tailwindUtils';
 
 // Type for breakpoint-specific state storage
 type BreakpointStates = Record<Breakpoint, Partial<InspectorState>>;
@@ -43,8 +42,8 @@ export const useInspectorState = (initialState?: Partial<InspectorState>) => {
       typography: { ...state.typography, ...(bpState.typography || {}) },
       transforms: { ...state.transforms, ...(bpState.transforms || {}) },
       transforms3D: { ...state.transforms3D, ...(bpState.transforms3D || {}) },
-      border: {
-        ...state.border,
+      border: { 
+        ...state.border, 
         ...(bpState.border || {}),
         radius: { ...state.border.radius, ...(bpState.border?.radius || {}) }
       },
@@ -54,12 +53,12 @@ export const useInspectorState = (initialState?: Partial<InspectorState>) => {
   }, [state, breakpointStates]);
 
   const updateState = useCallback(<K extends keyof InspectorState>(
-    key: K,
+    key: K, 
     value: InspectorState[K],
     breakpoint?: Breakpoint
   ) => {
     const bp = breakpoint || currentBreakpoint;
-
+    
     if (bp === 'base') {
       setState(prev => ({ ...prev, [key]: value }));
     } else {
@@ -77,16 +76,16 @@ export const useInspectorState = (initialState?: Partial<InspectorState>) => {
     breakpoint?: Breakpoint
   ) => {
     const bp = breakpoint || currentBreakpoint;
-
+    
     if (bp === 'base') {
       setState(prev => {
         const currentValue = prev[key];
         if (typeof currentValue === 'object' && currentValue !== null && !Array.isArray(currentValue)) {
           return {
             ...prev,
-            [key]: {
-              ...(currentValue as object),
-              [nestedKey]: value
+            [key]: { 
+              ...(currentValue as object), 
+              [nestedKey]: value 
             }
           };
         }
@@ -96,8 +95,8 @@ export const useInspectorState = (initialState?: Partial<InspectorState>) => {
       setBreakpointStates(prev => {
         const currentBpState = prev[bp] || {};
         const existingValue = currentBpState[key];
-        const currentValue = (typeof existingValue === 'object' && existingValue !== null)
-          ? existingValue as object
+        const currentValue = (typeof existingValue === 'object' && existingValue !== null) 
+          ? existingValue as object 
           : {};
         return {
           ...prev,
@@ -118,7 +117,7 @@ export const useInspectorState = (initialState?: Partial<InspectorState>) => {
     breakpoint?: Breakpoint
   ) => {
     const bp = breakpoint || currentBreakpoint;
-
+    
     if (bp === 'base') {
       setState(prev => {
         const nested = prev[key] as unknown;
@@ -144,7 +143,7 @@ export const useInspectorState = (initialState?: Partial<InspectorState>) => {
       setBreakpointStates(prev => {
         const currentBpState = prev[bp] || {};
         const existingValue = currentBpState[key];
-        const currentValue: Record<string, unknown> = (typeof existingValue === 'object' && existingValue !== null)
+        const currentValue: Record<string, unknown> = (typeof existingValue === 'object' && existingValue !== null) 
           ? JSON.parse(JSON.stringify(existingValue))
           : {};
         const existingNested = currentValue[nestedKey];
@@ -169,7 +168,7 @@ export const useInspectorState = (initialState?: Partial<InspectorState>) => {
   const applyStateChanges = useCallback((changes: Partial<InspectorState>) => {
     setState(prev => {
       const newState = { ...prev };
-
+      
       for (const [key, value] of Object.entries(changes)) {
         if (value !== undefined && value !== null) {
           if (typeof value === 'object' && !Array.isArray(value)) {
@@ -177,7 +176,7 @@ export const useInspectorState = (initialState?: Partial<InspectorState>) => {
             const prevValue = prev[key as keyof InspectorState];
             if (typeof prevValue === 'object' && prevValue !== null && !Array.isArray(prevValue)) {
               (newState as Record<string, unknown>)[key] = deepMerge(
-                prevValue as unknown as Record<string, unknown>,
+                prevValue as unknown as Record<string, unknown>, 
                 value as unknown as Record<string, unknown>
               );
             } else {
@@ -188,7 +187,7 @@ export const useInspectorState = (initialState?: Partial<InspectorState>) => {
           }
         }
       }
-
+      
       return newState;
     });
   }, []);
@@ -258,11 +257,11 @@ export const useInspectorState = (initialState?: Partial<InspectorState>) => {
 // Deep merge utility
 function deepMerge(target: Record<string, unknown>, source: Record<string, unknown>): Record<string, unknown> {
   const result = { ...target };
-
+  
   for (const key of Object.keys(source)) {
     const sourceValue = source[key];
     const targetValue = target[key];
-
+    
     if (
       sourceValue !== null &&
       typeof sourceValue === 'object' &&
@@ -279,43 +278,35 @@ function deepMerge(target: Record<string, unknown>, source: Record<string, unkno
       result[key] = sourceValue;
     }
   }
-
+  
   return result;
 }
 
-// FIXED: Tailwind class generation hook with granular dependencies
+// Tailwind class generation hook with multi-breakpoint support
 export const useGeneratedClasses = (state: InspectorState, breakpoint: Breakpoint = 'base') => {
   const prefix = breakpoint === 'base' ? '' : `${breakpoint}:`;
-
+  
   return useMemo(() => {
     const classes: string[] = [];
-
-    // Padding - use bracket notation for arbitrary values
-    const paddingL = normalizeNumericValue(state.padding.l);
-    const paddingT = normalizeNumericValue(state.padding.t);
-    const paddingR = normalizeNumericValue(state.padding.r);
-    const paddingB = normalizeNumericValue(state.padding.b);
-
-    if (paddingL && paddingL !== '0') classes.push(`${prefix}pl-[${paddingL}px]`);
-    if (paddingT && paddingT !== '0') classes.push(`${prefix}pt-[${paddingT}px]`);
-    if (paddingR && paddingR !== '0') classes.push(`${prefix}pr-[${paddingR}px]`);
-    if (paddingB && paddingB !== '0') classes.push(`${prefix}pb-[${paddingB}px]`);
-
-    // Margin - use bracket notation for arbitrary values
-    const marginX = normalizeNumericValue(state.margin.x);
-    const marginY = normalizeNumericValue(state.margin.y);
-
-    if (marginX && marginX !== '0') classes.push(`${prefix}mx-[${marginX}px]`);
-    if (marginY && marginY !== '0') classes.push(`${prefix}my-[${marginY}px]`);
-
+    
+    // Padding
+    if (state.padding.l && state.padding.l !== '0') classes.push(`${prefix}pl-${state.padding.l}`);
+    if (state.padding.t && state.padding.t !== '0') classes.push(`${prefix}pt-${state.padding.t}`);
+    if (state.padding.r && state.padding.r !== '0') classes.push(`${prefix}pr-${state.padding.r}`);
+    if (state.padding.b && state.padding.b !== '0') classes.push(`${prefix}pb-${state.padding.b}`);
+    
+    // Margin
+    if (state.margin.x && state.margin.x !== '0') classes.push(`${prefix}mx-${state.margin.x}`);
+    if (state.margin.y && state.margin.y !== '0') classes.push(`${prefix}my-${state.margin.y}`);
+    
     // Position
     if (state.position.type !== 'static') classes.push(`${prefix}${state.position.type}`);
-    if (state.position.zIndex) classes.push(`${prefix}z-[${normalizeNumericValue(state.position.zIndex)}]`);
-    if (state.position.l) classes.push(`${prefix}left-[${normalizeNumericValue(state.position.l)}px]`);
-    if (state.position.t) classes.push(`${prefix}top-[${normalizeNumericValue(state.position.t)}px]`);
-    if (state.position.r) classes.push(`${prefix}right-[${normalizeNumericValue(state.position.r)}px]`);
-    if (state.position.b) classes.push(`${prefix}bottom-[${normalizeNumericValue(state.position.b)}px]`);
-
+    if (state.position.zIndex) classes.push(`${prefix}z-${state.position.zIndex}`);
+    if (state.position.l) classes.push(`${prefix}left-${state.position.l}`);
+    if (state.position.t) classes.push(`${prefix}top-${state.position.t}`);
+    if (state.position.r) classes.push(`${prefix}right-${state.position.r}`);
+    if (state.position.b) classes.push(`${prefix}bottom-${state.position.b}`);
+    
     // Size
     if (state.size.width) classes.push(`${prefix}w-[${state.size.width}]`);
     if (state.size.height) classes.push(`${prefix}h-[${state.size.height}]`);
@@ -323,15 +314,15 @@ export const useGeneratedClasses = (state: InspectorState, breakpoint: Breakpoin
     if (state.size.maxHeight) classes.push(`${prefix}max-h-[${state.size.maxHeight}]`);
     if (state.size.minWidth) classes.push(`${prefix}min-w-[${state.size.minWidth}]`);
     if (state.size.minHeight) classes.push(`${prefix}min-h-[${state.size.minHeight}]`);
-
+    
     // Typography
     if (state.typography.fontFamily !== 'inter') classes.push(`${prefix}font-${state.typography.fontFamily}`);
     if (state.typography.fontWeight !== 'normal') classes.push(`${prefix}font-${state.typography.fontWeight}`);
-    if (state.typography.fontSize) classes.push(`${prefix}text-[${state.typography.fontSize}]`);
+    if (state.typography.fontSize) classes.push(`${prefix}text-${state.typography.fontSize}`);
     if (state.typography.letterSpacing !== 'normal') classes.push(`${prefix}tracking-${state.typography.letterSpacing}`);
-    if (state.typography.lineHeight) classes.push(`${prefix}leading-[${state.typography.lineHeight}]`);
+    if (state.typography.lineHeight) classes.push(`${prefix}leading-${state.typography.lineHeight}`);
     if (state.typography.textAlign !== 'left') classes.push(`${prefix}text-${state.typography.textAlign}`);
-
+    
     // Transforms
     if (state.transforms.rotate !== 0) classes.push(`${prefix}rotate-[${state.transforms.rotate}deg]`);
     if (state.transforms.scale !== 100) classes.push(`${prefix}scale-[${state.transforms.scale / 100}]`);
@@ -339,9 +330,9 @@ export const useGeneratedClasses = (state: InspectorState, breakpoint: Breakpoin
     if (state.transforms.translateY !== 0) classes.push(`${prefix}translate-y-[${state.transforms.translateY}px]`);
     if (state.transforms.skewX !== 0) classes.push(`${prefix}skew-x-[${state.transforms.skewX}deg]`);
     if (state.transforms.skewY !== 0) classes.push(`${prefix}skew-y-[${state.transforms.skewY}deg]`);
-
+    
     // Effects
-    if (state.effects.opacity !== 100) classes.push(`${prefix}opacity-[${state.effects.opacity / 100}]`);
+    if (state.effects.opacity !== 100) classes.push(`${prefix}opacity-${state.effects.opacity}`);
     if (state.effects.blur > 0) classes.push(`${prefix}blur-[${state.effects.blur}px]`);
     if (state.effects.backdropBlur > 0) classes.push(`${prefix}backdrop-blur-[${state.effects.backdropBlur}px]`);
     if (state.effects.hueRotate !== 0) classes.push(`${prefix}hue-rotate-[${state.effects.hueRotate}deg]`);
@@ -352,39 +343,17 @@ export const useGeneratedClasses = (state: InspectorState, breakpoint: Breakpoin
     if (state.effects.invert > 0) classes.push(`${prefix}invert-[${state.effects.invert / 100}]`);
     if (state.effects.sepia > 0) classes.push(`${prefix}sepia-[${state.effects.sepia / 100}]`);
     if (state.effects.shadow !== 'none') classes.push(`${prefix}shadow-${state.effects.shadow}`);
-
+    
     // Border
     if (state.border.radius.all > 0) classes.push(`${prefix}rounded-[${state.border.radius.all}px]`);
-    if (state.border.width && state.border.width !== '0') classes.push(`${prefix}border-[${normalizeNumericValue(state.border.width)}px]`);
+    if (state.border.width && state.border.width !== '0') classes.push(`${prefix}border-${state.border.width}`);
     if (state.border.style !== 'solid' && state.border.style !== 'none') classes.push(`${prefix}border-${state.border.style}`);
-
+    
     // Custom Tailwind classes
     classes.push(...state.tailwindClasses);
-
+    
     return classes.filter(Boolean).join(' ');
-  }, [
-    // CRITICAL FIX: Granular dependencies to prevent infinite loops
-    prefix,
-    state.padding.l, state.padding.t, state.padding.r, state.padding.b,
-    state.margin.x, state.margin.y,
-    state.position.type, state.position.zIndex,
-    state.position.l, state.position.t, state.position.r, state.position.b,
-    state.size.width, state.size.height,
-    state.size.maxWidth, state.size.maxHeight,
-    state.size.minWidth, state.size.minHeight,
-    state.typography.fontFamily, state.typography.fontWeight,
-    state.typography.fontSize, state.typography.letterSpacing,
-    state.typography.lineHeight, state.typography.textAlign,
-    state.transforms.rotate, state.transforms.scale,
-    state.transforms.translateX, state.transforms.translateY,
-    state.transforms.skewX, state.transforms.skewY,
-    state.effects.opacity, state.effects.blur, state.effects.backdropBlur,
-    state.effects.hueRotate, state.effects.saturation, state.effects.brightness,
-    state.effects.contrast, state.effects.grayscale, state.effects.invert,
-    state.effects.sepia, state.effects.shadow,
-    state.border.radius.all, state.border.width, state.border.style,
-    JSON.stringify(state.tailwindClasses)
-  ]);
+  }, [state, prefix]);
 };
 
 // Generate all breakpoint classes combined
@@ -396,16 +365,19 @@ export const useAllBreakpointClasses = (
   return useMemo(() => {
     const allClasses: string[] = [];
     const breakpoints: Breakpoint[] = ['base', 'sm', 'md', 'lg', 'xl', '2xl'];
-
+    
     breakpoints.forEach(bp => {
       if (bp === 'base' || Object.keys(breakpointStates[bp] || {}).length > 0) {
         const effectiveState = getEffectiveState(bp);
         const prefix = bp === 'base' ? '' : `${bp}:`;
-
-        // ... (rest of the implementation stays the same)
+        
+        // Generate classes for this breakpoint (simplified - reuse logic from useGeneratedClasses)
+        if (effectiveState.padding.l && effectiveState.padding.l !== '0') 
+          allClasses.push(`${prefix}pl-${effectiveState.padding.l}`);
+        // ... add more as needed
       }
     });
-
+    
     return [...new Set(allClasses)].join(' ');
   }, [baseState, breakpointStates, getEffectiveState]);
 };
@@ -414,55 +386,62 @@ export const useAllBreakpointClasses = (
 export const useGeneratedStyles = (state: InspectorState) => {
   return useMemo(() => {
     const styles: Record<string, string> = {};
-
+    
+    // Colors (inline styles for custom colors)
     if (state.typography.textColor) styles.color = state.typography.textColor;
     if (state.appearance.backgroundColor) styles.backgroundColor = state.appearance.backgroundColor;
     if (state.border.color) styles.borderColor = state.border.color;
-
+    
+    // 3D Transforms
     const transforms3D: string[] = [];
     if (state.transforms3D.rotateX !== 0) transforms3D.push(`rotateX(${state.transforms3D.rotateX}deg)`);
     if (state.transforms3D.rotateY !== 0) transforms3D.push(`rotateY(${state.transforms3D.rotateY}deg)`);
     if (state.transforms3D.rotateZ !== 0) transforms3D.push(`rotateZ(${state.transforms3D.rotateZ}deg)`);
     if (transforms3D.length > 0) styles.transform = transforms3D.join(' ');
     if (state.transforms3D.perspective > 0) styles.perspective = `${state.transforms3D.perspective * 100}px`;
-
+    
+    // Blend mode
     if (state.appearance.blendMode !== 'normal') styles.mixBlendMode = state.appearance.blendMode;
+    
+    // Background image
     if (state.appearance.backgroundImage) styles.backgroundImage = `url(${state.appearance.backgroundImage})`;
-
+    
+    // Inline CSS parsing
     if (state.inlineCSS) {
       const cssLines = state.inlineCSS.split(';').filter(Boolean);
       cssLines.forEach(line => {
         const [prop, val] = line.split(':').map(s => s.trim());
         if (prop && val) {
+          // Convert CSS prop to camelCase
           const camelProp = prop.replace(/-([a-z])/g, g => g[1].toUpperCase());
           styles[camelProp] = val;
         }
       });
     }
-
+    
     return styles;
   }, [state]);
 };
 
 // HTML code generation hook
 export const useGeneratedCode = (
-  state: InspectorState,
+  state: InspectorState, 
   generatedClasses: string,
   generatedStyles: Record<string, string>
 ) => {
   return useMemo(() => {
     const idAttr = state.elementId ? ` id="${state.elementId}"` : '';
     const classAttr = generatedClasses ? ` class="${generatedClasses}"` : '';
-
+    
     const styleStr = Object.entries(generatedStyles)
       .map(([k, v]) => `${k.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${v}`)
       .join('; ');
     const styleAttr = styleStr ? ` style="${styleStr}"` : '';
-
+    
     const hrefAttr = state.link && (state.tag === 'a' || state.tag === 'button') ? ` href="${state.link}"` : '';
-
+    
     const html = `<${state.tag}${idAttr}${classAttr}${styleAttr}${hrefAttr}>\n  ${state.textContent}\n</${state.tag}>`;
-
+    
     return html;
   }, [state, generatedClasses, generatedStyles]);
 };
@@ -472,44 +451,46 @@ export const useExportCSS = (state: InspectorState) => {
   return useMemo(() => {
     const lines: string[] = [];
     const selector = state.elementId ? `#${state.elementId}` : '.element';
-
+    
     lines.push(`${selector} {`);
-
+    
+    // Position
     if (state.position.type !== 'static') lines.push(`  position: ${state.position.type};`);
     if (state.position.l) lines.push(`  left: ${state.position.l};`);
     if (state.position.t) lines.push(`  top: ${state.position.t};`);
     if (state.position.r) lines.push(`  right: ${state.position.r};`);
     if (state.position.b) lines.push(`  bottom: ${state.position.b};`);
     if (state.position.zIndex) lines.push(`  z-index: ${state.position.zIndex};`);
-
+    
+    // Size
     if (state.size.width) lines.push(`  width: ${state.size.width};`);
     if (state.size.height) lines.push(`  height: ${state.size.height};`);
-
-    const paddingT = state.padding.t ? normalizeNumericValue(state.padding.t) : '0';
-    const paddingR = state.padding.r ? normalizeNumericValue(state.padding.r) : '0';
-    const paddingB = state.padding.b ? normalizeNumericValue(state.padding.b) : '0';
-    const paddingL = state.padding.l ? normalizeNumericValue(state.padding.l) : '0';
-    const padding = `${paddingT}px ${paddingR}px ${paddingB}px ${paddingL}px`;
-    if (padding !== '0px 0px 0px 0px') lines.push(`  padding: ${padding};`);
-
-    const marginY = state.margin.y ? normalizeNumericValue(state.margin.y) : '0';
-    const marginX = state.margin.x ? normalizeNumericValue(state.margin.x) : '0';
+    
+    // Padding
+    const padding = `${state.padding.t || 0} ${state.padding.r || 0} ${state.padding.b || 0} ${state.padding.l || 0}`;
+    if (padding !== '0 0 0 0') lines.push(`  padding: ${padding.replace(/(\d+)/g, '$1px')};`);
+    
+    // Margin
     if (state.margin.x !== '0' || state.margin.y !== '0') {
-      lines.push(`  margin: ${marginY}px ${marginX}px;`);
+      lines.push(`  margin: ${state.margin.y || 0}px ${state.margin.x || 0}px;`);
     }
-
+    
+    // Typography
     if (state.typography.fontSize) lines.push(`  font-size: ${state.typography.fontSize};`);
     if (state.typography.fontWeight !== 'normal') lines.push(`  font-weight: ${state.typography.fontWeight};`);
     if (state.typography.textColor) lines.push(`  color: ${state.typography.textColor};`);
     if (state.typography.textAlign !== 'left') lines.push(`  text-align: ${state.typography.textAlign};`);
-
+    
+    // Background
     if (state.appearance.backgroundColor) lines.push(`  background-color: ${state.appearance.backgroundColor};`);
-
+    
+    // Border
     if (state.border.radius.all > 0) lines.push(`  border-radius: ${state.border.radius.all}px;`);
     if (state.border.color && state.border.width !== '0') {
       lines.push(`  border: ${state.border.width}px ${state.border.style} ${state.border.color};`);
     }
-
+    
+    // Transforms
     const transforms: string[] = [];
     if (state.transforms.translateX !== 0) transforms.push(`translateX(${state.transforms.translateX}px)`);
     if (state.transforms.translateY !== 0) transforms.push(`translateY(${state.transforms.translateY}px)`);
@@ -522,7 +503,8 @@ export const useExportCSS = (state: InspectorState) => {
     if (state.transforms3D.rotateZ !== 0) transforms.push(`rotateZ(${state.transforms3D.rotateZ}deg)`);
     if (transforms.length > 0) lines.push(`  transform: ${transforms.join(' ')};`);
     if (state.transforms3D.perspective > 0) lines.push(`  perspective: ${state.transforms3D.perspective * 100}px;`);
-
+    
+    // Effects
     const filters: string[] = [];
     if (state.effects.blur > 0) filters.push(`blur(${state.effects.blur}px)`);
     if (state.effects.brightness !== 100) filters.push(`brightness(${state.effects.brightness / 100})`);
@@ -533,13 +515,13 @@ export const useExportCSS = (state: InspectorState) => {
     if (state.effects.invert > 0) filters.push(`invert(${state.effects.invert / 100})`);
     if (state.effects.sepia > 0) filters.push(`sepia(${state.effects.sepia / 100})`);
     if (filters.length > 0) lines.push(`  filter: ${filters.join(' ')};`);
-
+    
     if (state.effects.backdropBlur > 0) lines.push(`  backdrop-filter: blur(${state.effects.backdropBlur}px);`);
     if (state.effects.opacity !== 100) lines.push(`  opacity: ${state.effects.opacity / 100};`);
     if (state.effects.shadow !== 'none') lines.push(`  /* shadow-${state.effects.shadow} */`);
-
+    
     lines.push('}');
-
+    
     return lines.join('\n');
   }, [state]);
 };

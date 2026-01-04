@@ -251,15 +251,7 @@ const TypographyStylesSection = memo<TypographyStylesSectionProps>(({
     (v: string) => {
       // Validáció: csak számok és érvényes CSS egységek
       if (/^\d*\.?\d*(px|rem|em|%)?$/.test(v) || v === '') {
-        // Normalize to numeric-only (remove units)
-        const trimmed = v.trim();
-        if (trimmed === '' || trimmed === '0') {
-          onTypographyChange('fontSize', trimmed);
-        } else {
-          const match = trimmed.match(/^([\d.-]+)/);
-          const normalized = match ? match[1] : trimmed;
-          onTypographyChange('fontSize', normalized);
-        }
+        onTypographyChange('fontSize', v);
       }
     },
     [onTypographyChange]
@@ -269,15 +261,7 @@ const TypographyStylesSection = memo<TypographyStylesSectionProps>(({
     (v: string) => {
       // Validáció: számok vagy 'normal'
       if (/^\d*\.?\d*(px|rem|em|%)?$/.test(v) || v === 'normal' || v === '') {
-        // Normalize to numeric-only (remove units) but keep 'normal'
-        const trimmed = v.trim();
-        if (trimmed === '' || trimmed === '0' || trimmed === 'normal') {
-          onTypographyChange('lineHeight', trimmed);
-        } else {
-          const match = trimmed.match(/^([\d.-]+)/);
-          const normalized = match ? match[1] : trimmed;
-          onTypographyChange('lineHeight', normalized);
-        }
+        onTypographyChange('lineHeight', v);
       }
     },
     [onTypographyChange]

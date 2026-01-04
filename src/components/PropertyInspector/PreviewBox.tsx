@@ -3,15 +3,6 @@
 import React, { useMemo } from 'react';
 import type { InspectorState } from './types';
 
-// Utility: Normalize numeric values to ensure no duplicate units
-function normalizeNumericValue(value: string | number | null | undefined): string {
-  if (!value) return '';
-  const str = String(value).trim();
-  // Remove any existing units to get just the number
-  const numMatch = str.match(/^([\d.-]+)/);
-  return numMatch ? numMatch[1] : str;
-}
-
 interface PreviewBoxProps {
   state: InspectorState;
   generatedClasses: string;
@@ -71,48 +62,32 @@ export const PreviewBox: React.FC<PreviewBoxProps> = ({
       }
     }
     
-    // Border - normalize width to prevent duplicate units
+    // Border
     if (state.border.color && state.border.width !== '0') {
-      const borderWidth = normalizeNumericValue(state.border.width) || '1';
-      styles.border = `${borderWidth}px ${state.border.style} ${state.border.color}`;
+      styles.border = `${state.border.width}px ${state.border.style} ${state.border.color}`;
     }
     
-    // Padding - normalize values to prevent duplicate units
+    // Padding
     const { l, t, r, b } = state.padding;
     if (l || t || r || b) {
-      const paddingT = normalizeNumericValue(t) || '0';
-      const paddingR = normalizeNumericValue(r) || '0';
-      const paddingB = normalizeNumericValue(b) || '0';
-      const paddingL = normalizeNumericValue(l) || '0';
-      styles.padding = `${paddingT}px ${paddingR}px ${paddingB}px ${paddingL}px`;
+      styles.padding = `${t || 0}px ${r || 0}px ${b || 0}px ${l || 0}px`;
     }
-
-    // Margin - normalize values to prevent duplicate units
+    
+    // Margin
     if (state.margin.x !== '0' || state.margin.y !== '0') {
-      const marginY = normalizeNumericValue(state.margin.y) || '0';
-      const marginX = normalizeNumericValue(state.margin.x) || '0';
-      styles.margin = `${marginY}px ${marginX}px`;
+      styles.margin = `${state.margin.y || 0}px ${state.margin.x || 0}px`;
     }
-
-    // Size - ensure units are present
-    if (state.size.width) {
-      const width = state.size.width;
-      styles.width = width.includes('px') || width.includes('%') ? width : `${width}px`;
-    }
-    if (state.size.height) {
-      const height = state.size.height;
-      styles.height = height.includes('px') || height.includes('%') ? height : `${height}px`;
-    }
-
+    
+    // Size
+    if (state.size.width) styles.width = state.size.width;
+    if (state.size.height) styles.height = state.size.height;
+    
     // Typography
-    if (state.typography.fontSize) {
-      const fontSize = state.typography.fontSize;
-      styles.fontSize = fontSize.includes('px') || fontSize.includes('rem') ? fontSize : `${fontSize}px`;
-    }
+    if (state.typography.fontSize) styles.fontSize = state.typography.fontSize;
     if (state.typography.fontWeight !== 'normal') styles.fontWeight = state.typography.fontWeight as any;
     if (state.typography.textAlign !== 'left') styles.textAlign = state.typography.textAlign;
     if (state.typography.textColor) styles.color = state.typography.textColor;
-
+    
     // Background
     if (state.appearance.backgroundColor) styles.backgroundColor = state.appearance.backgroundColor;
     if (state.appearance.blendMode !== 'normal') styles.mixBlendMode = state.appearance.blendMode as any;
