@@ -194,9 +194,22 @@ interface SizeSectionProps {
 
 const SizeSection = memo<SizeSectionProps>(({ size, onSizeChange }) => {
   const handleChange = useCallback((key: keyof SizeValue, value: string) => {
-    const sanitized = sanitizeCssValue(value);
-    if (isValidCssValue(sanitized)) {
-      onSizeChange(key, sanitized);
+    // For size, preserve percentages and other units, but extract numbers from px
+    const trimmed = value.trim();
+    let normalized = trimmed;
+
+    if (trimmed === '' || trimmed === 'auto' || trimmed === 'fit-content' || trimmed === 'min-content' || trimmed === 'max-content') {
+      normalized = trimmed;
+    } else if (trimmed.includes('%') || trimmed.includes('rem') || trimmed.includes('em') || trimmed.includes('vh') || trimmed.includes('vw')) {
+      // Keep special units as-is
+      normalized = trimmed;
+    } else {
+      // For px values, normalize to numeric only
+      normalized = normalizeNumericValue(trimmed);
+    }
+
+    if (isValidCssValue(normalized)) {
+      onSizeChange(key, normalized);
     }
   }, [onSizeChange]);
 
