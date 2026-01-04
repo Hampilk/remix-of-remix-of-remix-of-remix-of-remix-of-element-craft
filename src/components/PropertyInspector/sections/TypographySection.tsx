@@ -269,7 +269,15 @@ const TypographyStylesSection = memo<TypographyStylesSectionProps>(({
     (v: string) => {
       // Validáció: számok vagy 'normal'
       if (/^\d*\.?\d*(px|rem|em|%)?$/.test(v) || v === 'normal' || v === '') {
-        onTypographyChange('lineHeight', v);
+        // Normalize to numeric-only (remove units) but keep 'normal'
+        const trimmed = v.trim();
+        if (trimmed === '' || trimmed === '0' || trimmed === 'normal') {
+          onTypographyChange('lineHeight', trimmed);
+        } else {
+          const match = trimmed.match(/^([\d.-]+)/);
+          const normalized = match ? match[1] : trimmed;
+          onTypographyChange('lineHeight', normalized);
+        }
       }
     },
     [onTypographyChange]
