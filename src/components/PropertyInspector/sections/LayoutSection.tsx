@@ -115,8 +115,13 @@ interface PaddingSectionProps {
 
 const PaddingSection = memo<PaddingSectionProps>(({ padding, onPaddingChange }) => {
   const activeCount = useMemo(() => {
-    return Object.values(padding).filter(v => v && v !== '0' && v !== '0px').length;
+    return Object.values(padding).filter(v => v && v !== '0').length;
   }, [padding]);
+
+  const handlePaddingChange = useCallback((key: keyof SpacingValue, value: string) => {
+    const normalized = normalizeNumericValue(value);
+    onPaddingChange(key, normalized);
+  }, [onPaddingChange]);
 
   return (
     <AccordionItem value="padding-section" className="border-none">
@@ -124,7 +129,7 @@ const PaddingSection = memo<PaddingSectionProps>(({ padding, onPaddingChange }) 
         <SectionHeader icon={<Square className="w-3 h-3" />} title="Padding" badge={activeCount > 0 ? activeCount : undefined} />
       </AccordionTrigger>
       <AccordionContent className="pb-2 space-y-2">
-        <SpacingGrid values={padding} onChange={onPaddingChange} />
+        <SpacingGrid values={padding} onChange={handlePaddingChange} />
         <div className="flex flex-wrap gap-1">
           <span className="text-[9px] text-muted-foreground w-full mb-0.5">Quick:</span>
           {SPACING_PRESETS.map(preset => (
@@ -132,10 +137,10 @@ const PaddingSection = memo<PaddingSectionProps>(({ padding, onPaddingChange }) 
               key={preset.label}
               type="button"
               onClick={() => {
-                onPaddingChange('l', preset.value);
-                onPaddingChange('t', preset.value);
-                onPaddingChange('r', preset.value);
-                onPaddingChange('b', preset.value);
+                handlePaddingChange('l', preset.value);
+                handlePaddingChange('t', preset.value);
+                handlePaddingChange('r', preset.value);
+                handlePaddingChange('b', preset.value);
               }}
               className="px-1.5 py-0.5 text-[9px] rounded bg-secondary hover:bg-secondary/80 transition-colors"
             >
