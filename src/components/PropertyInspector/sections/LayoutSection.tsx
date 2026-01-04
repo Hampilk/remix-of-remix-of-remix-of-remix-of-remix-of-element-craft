@@ -39,11 +39,11 @@ interface LayoutSectionProps {
 
 const SPACING_PRESETS = [
   { label: 'None', value: '0' },
-  { label: 'XS', value: '4px' },
-  { label: 'SM', value: '8px' },
-  { label: 'MD', value: '16px' },
-  { label: 'LG', value: '24px' },
-  { label: 'XL', value: '32px' },
+  { label: 'XS', value: '4' },
+  { label: 'SM', value: '8' },
+  { label: 'MD', value: '16' },
+  { label: 'LG', value: '24' },
+  { label: 'XL', value: '32' },
 ] as const;
 
 const SIZE_PRESETS = [
