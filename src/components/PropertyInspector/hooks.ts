@@ -509,13 +509,19 @@ export const useExportCSS = (state: InspectorState) => {
     if (state.size.width) lines.push(`  width: ${state.size.width};`);
     if (state.size.height) lines.push(`  height: ${state.size.height};`);
     
-    // Padding
-    const padding = `${state.padding.t || 0} ${state.padding.r || 0} ${state.padding.b || 0} ${state.padding.l || 0}`;
-    if (padding !== '0 0 0 0') lines.push(`  padding: ${padding.replace(/(\d+)/g, '$1px')};`);
-    
-    // Margin
+    // Padding - normalize values before adding units
+    const paddingT = state.padding.t ? normalizeNumericValue(state.padding.t) : '0';
+    const paddingR = state.padding.r ? normalizeNumericValue(state.padding.r) : '0';
+    const paddingB = state.padding.b ? normalizeNumericValue(state.padding.b) : '0';
+    const paddingL = state.padding.l ? normalizeNumericValue(state.padding.l) : '0';
+    const padding = `${paddingT}px ${paddingR}px ${paddingB}px ${paddingL}px`;
+    if (padding !== '0px 0px 0px 0px') lines.push(`  padding: ${padding};`);
+
+    // Margin - normalize values before adding units
+    const marginY = state.margin.y ? normalizeNumericValue(state.margin.y) : '0';
+    const marginX = state.margin.x ? normalizeNumericValue(state.margin.x) : '0';
     if (state.margin.x !== '0' || state.margin.y !== '0') {
-      lines.push(`  margin: ${state.margin.y || 0}px ${state.margin.x || 0}px;`);
+      lines.push(`  margin: ${marginY}px ${marginX}px;`);
     }
     
     // Typography
