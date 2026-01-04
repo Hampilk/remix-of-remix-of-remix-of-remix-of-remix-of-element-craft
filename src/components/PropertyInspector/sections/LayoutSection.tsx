@@ -163,9 +163,9 @@ interface MarginSectionProps {
 
 const MarginSection = memo<MarginSectionProps>(({ margin, onMarginChange }) => {
   const handleChange = useCallback((key: keyof MarginValue, value: string) => {
-    const sanitized = sanitizeCssValue(value);
-    if (isValidCssValue(sanitized)) {
-      onMarginChange(key, sanitized);
+    const normalized = normalizeNumericValue(value);
+    if (isValidCssValue(normalized || '0')) {
+      onMarginChange(key, normalized);
     }
   }, [onMarginChange]);
 
