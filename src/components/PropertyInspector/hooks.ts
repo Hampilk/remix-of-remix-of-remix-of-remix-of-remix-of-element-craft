@@ -282,31 +282,74 @@ function deepMerge(target: Record<string, unknown>, source: Record<string, unkno
   return result;
 }
 
+// Utility: Normalize numeric values to ensure no duplicate units
+function normalizeNumericValue(value: string | number | null | undefined): string {
+  if (!value) return '';
+  const str = String(value).trim();
+  // Remove any existing units to get just the number
+  const numMatch = str.match(/^([\d.-]+)/);
+  return numMatch ? numMatch[1] : str;
+}
+
+// Utility: Generate Tailwind class with proper unit handling
+function getTailwindClass(property: string, value: string, breakpoint: Breakpoint = 'base'): string {
+  const prefix = breakpoint === 'base' ? '' : `${breakpoint}:`;
+
+  if (!value || value === '0') return '';
+
+  const numValue = normalizeNumericValue(value);
+
+  // For position and size properties, use bracket notation with units
+  if (property.startsWith('position-') || property.startsWith('size-')) {
+    return `${prefix}${property}-[${numValue}px]`;
+  }
+
+  // For spacing properties with non-standard values, use bracket notation
+  if (property.startsWith('p-') || property.startsWith('m-')) {
+    // Try standard Tailwind token first (e.g., p-4, m-2)
+    if (/^\d+$/.test(numValue) && ['0', '1', '2', '3', '4', '6', '8', '10', '12', '14', '16', '20', '24', '28', '32', '36', '40', '44', '48', '52', '56', '60', '64', '72', '80', '96'].includes(numValue)) {
+      return `${prefix}${property}-${numValue}`;
+    }
+    // Otherwise use bracket notation
+    return `${prefix}${property}-[${numValue}px]`;
+  }
+
+  return `${prefix}${property}-${value}`;
+}
+
 // Tailwind class generation hook with multi-breakpoint support
 export const useGeneratedClasses = (state: InspectorState, breakpoint: Breakpoint = 'base') => {
   const prefix = breakpoint === 'base' ? '' : `${breakpoint}:`;
-  
+
   return useMemo(() => {
     const classes: string[] = [];
-    
-    // Padding
-    if (state.padding.l && state.padding.l !== '0') classes.push(`${prefix}pl-${state.padding.l}`);
-    if (state.padding.t && state.padding.t !== '0') classes.push(`${prefix}pt-${state.padding.t}`);
-    if (state.padding.r && state.padding.r !== '0') classes.push(`${prefix}pr-${state.padding.r}`);
-    if (state.padding.b && state.padding.b !== '0') classes.push(`${prefix}pb-${state.padding.b}`);
-    
-    // Margin
-    if (state.margin.x && state.margin.x !== '0') classes.push(`${prefix}mx-${state.margin.x}`);
-    if (state.margin.y && state.margin.y !== '0') classes.push(`${prefix}my-${state.margin.y}`);
-    
+
+    // Padding - use bracket notation for arbitrary values
+    const paddingL = normalizeNumericValue(state.padding.l);
+    const paddingT = normalizeNumericValue(state.padding.t);
+    const paddingR = normalizeNumericValue(state.padding.r);
+    const paddingB = normalizeNumericValue(state.padding.b);
+
+    if (paddingL && paddingL !== '0') classes.push(`${prefix}pl-[${paddingL}px]`);
+    if (paddingT && paddingT !== '0') classes.push(`${prefix}pt-[${paddingT}px]`);
+    if (paddingR && paddingR !== '0') classes.push(`${prefix}pr-[${paddingR}px]`);
+    if (paddingB && paddingB !== '0') classes.push(`${prefix}pb-[${paddingB}px]`);
+
+    // Margin - use bracket notation for arbitrary values
+    const marginX = normalizeNumericValue(state.margin.x);
+    const marginY = normalizeNumericValue(state.margin.y);
+
+    if (marginX && marginX !== '0') classes.push(`${prefix}mx-[${marginX}px]`);
+    if (marginY && marginY !== '0') classes.push(`${prefix}my-[${marginY}px]`);
+
     // Position
     if (state.position.type !== 'static') classes.push(`${prefix}${state.position.type}`);
-    if (state.position.zIndex) classes.push(`${prefix}z-${state.position.zIndex}`);
-    if (state.position.l) classes.push(`${prefix}left-${state.position.l}`);
-    if (state.position.t) classes.push(`${prefix}top-${state.position.t}`);
-    if (state.position.r) classes.push(`${prefix}right-${state.position.r}`);
-    if (state.position.b) classes.push(`${prefix}bottom-${state.position.b}`);
-    
+    if (state.position.zIndex) classes.push(`${prefix}z-[${normalizeNumericValue(state.position.zIndex)}]`);
+    if (state.position.l) classes.push(`${prefix}left-[${normalizeNumericValue(state.position.l)}px]`);
+    if (state.position.t) classes.push(`${prefix}top-[${normalizeNumericValue(state.position.t)}px]`);
+    if (state.position.r) classes.push(`${prefix}right-[${normalizeNumericValue(state.position.r)}px]`);
+    if (state.position.b) classes.push(`${prefix}bottom-[${normalizeNumericValue(state.position.b)}px]`);
+
     // Size
     if (state.size.width) classes.push(`${prefix}w-[${state.size.width}]`);
     if (state.size.height) classes.push(`${prefix}h-[${state.size.height}]`);
@@ -314,15 +357,15 @@ export const useGeneratedClasses = (state: InspectorState, breakpoint: Breakpoin
     if (state.size.maxHeight) classes.push(`${prefix}max-h-[${state.size.maxHeight}]`);
     if (state.size.minWidth) classes.push(`${prefix}min-w-[${state.size.minWidth}]`);
     if (state.size.minHeight) classes.push(`${prefix}min-h-[${state.size.minHeight}]`);
-    
+
     // Typography
     if (state.typography.fontFamily !== 'inter') classes.push(`${prefix}font-${state.typography.fontFamily}`);
     if (state.typography.fontWeight !== 'normal') classes.push(`${prefix}font-${state.typography.fontWeight}`);
-    if (state.typography.fontSize) classes.push(`${prefix}text-${state.typography.fontSize}`);
+    if (state.typography.fontSize) classes.push(`${prefix}text-[${state.typography.fontSize}]`);
     if (state.typography.letterSpacing !== 'normal') classes.push(`${prefix}tracking-${state.typography.letterSpacing}`);
-    if (state.typography.lineHeight) classes.push(`${prefix}leading-${state.typography.lineHeight}`);
+    if (state.typography.lineHeight) classes.push(`${prefix}leading-[${state.typography.lineHeight}]`);
     if (state.typography.textAlign !== 'left') classes.push(`${prefix}text-${state.typography.textAlign}`);
-    
+
     // Transforms
     if (state.transforms.rotate !== 0) classes.push(`${prefix}rotate-[${state.transforms.rotate}deg]`);
     if (state.transforms.scale !== 100) classes.push(`${prefix}scale-[${state.transforms.scale / 100}]`);
@@ -330,9 +373,9 @@ export const useGeneratedClasses = (state: InspectorState, breakpoint: Breakpoin
     if (state.transforms.translateY !== 0) classes.push(`${prefix}translate-y-[${state.transforms.translateY}px]`);
     if (state.transforms.skewX !== 0) classes.push(`${prefix}skew-x-[${state.transforms.skewX}deg]`);
     if (state.transforms.skewY !== 0) classes.push(`${prefix}skew-y-[${state.transforms.skewY}deg]`);
-    
+
     // Effects
-    if (state.effects.opacity !== 100) classes.push(`${prefix}opacity-${state.effects.opacity}`);
+    if (state.effects.opacity !== 100) classes.push(`${prefix}opacity-[${state.effects.opacity / 100}]`);
     if (state.effects.blur > 0) classes.push(`${prefix}blur-[${state.effects.blur}px]`);
     if (state.effects.backdropBlur > 0) classes.push(`${prefix}backdrop-blur-[${state.effects.backdropBlur}px]`);
     if (state.effects.hueRotate !== 0) classes.push(`${prefix}hue-rotate-[${state.effects.hueRotate}deg]`);
@@ -343,15 +386,15 @@ export const useGeneratedClasses = (state: InspectorState, breakpoint: Breakpoin
     if (state.effects.invert > 0) classes.push(`${prefix}invert-[${state.effects.invert / 100}]`);
     if (state.effects.sepia > 0) classes.push(`${prefix}sepia-[${state.effects.sepia / 100}]`);
     if (state.effects.shadow !== 'none') classes.push(`${prefix}shadow-${state.effects.shadow}`);
-    
+
     // Border
     if (state.border.radius.all > 0) classes.push(`${prefix}rounded-[${state.border.radius.all}px]`);
-    if (state.border.width && state.border.width !== '0') classes.push(`${prefix}border-${state.border.width}`);
+    if (state.border.width && state.border.width !== '0') classes.push(`${prefix}border-[${normalizeNumericValue(state.border.width)}px]`);
     if (state.border.style !== 'solid' && state.border.style !== 'none') classes.push(`${prefix}border-${state.border.style}`);
-    
+
     // Custom Tailwind classes
     classes.push(...state.tailwindClasses);
-    
+
     return classes.filter(Boolean).join(' ');
   }, [state, prefix]);
 };
