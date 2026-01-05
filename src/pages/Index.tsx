@@ -160,8 +160,8 @@ PreviewHeader.displayName = 'PreviewHeader';
  */
 const GridBackground = memo(() => {
   return (
-    <div 
-      className="absolute inset-0 opacity-5"
+    <div
+      className="absolute inset-0 opacity-5 pointer-events-none"
       style={{
         backgroundImage: `
           linear-gradient(to right, hsl(var(--foreground)) 1px, transparent 1px),
