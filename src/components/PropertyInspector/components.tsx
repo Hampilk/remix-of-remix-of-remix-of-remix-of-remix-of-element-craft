@@ -12,12 +12,13 @@ interface ColorButtonProps {
   color: string | null;
   onChange: (color: string | null) => void;
   label: string;
+  'aria-label'?: string;
 }
 
-export const ColorButton: React.FC<ColorButtonProps> = ({ color, onChange, label }) => (
+export const ColorButton: React.FC<ColorButtonProps> = ({ color, onChange, label, 'aria-label': ariaLabel }) => (
   <Popover>
     <PopoverTrigger asChild>
-      <button className={`h-7 flex items-center gap-2 px-2 py-1 text-xs rounded-md border border-border bg-card hover:bg-secondary transition-colors ${!color ? 'opacity-60' : ''}`}>
+      <button type="button" className={`h-7 flex items-center gap-2 px-2 py-1 text-xs rounded-md border border-border bg-card hover:bg-secondary transition-colors ${!color ? 'opacity-60' : ''}`} aria-label={ariaLabel}>
         <div 
           className="w-4 h-4 rounded-full border border-border shadow-inner" 
           style={{ backgroundColor: color || 'hsl(var(--muted))' }}
