@@ -2,7 +2,7 @@
 // Separates logic for better testability and reusability
 
 import { useMemo, useCallback, useState } from 'react';
-import type { InspectorState } from './types';
+import type { InspectorState } from '@/components/PropertyInspector/types';
 import {
   buildTransforms,
   buildFilters,
@@ -12,7 +12,7 @@ import {
   buildMargin,
   normalizeNumericValue,
   CONSTANTS
-} from './preview-box-utils';
+} from '@/lib/preview-box-utils';
 
 /**
  * Hook for computing preview styles with optimized memoization
@@ -114,7 +114,7 @@ export function usePreviewStyles(
       result.backgroundColor = appearance.backgroundColor;
     }
     if (appearance.blendMode && appearance.blendMode !== 'normal') {
-      result.mixBlendMode = appearance.blendMode;
+      result.mixBlendMode = appearance.blendMode as React.CSSProperties['mixBlendMode'];
     }
     
     // Focus state
