@@ -593,36 +593,11 @@ export const PropertyInspector: React.FC = () => {
   useEffect(() => {
     setIsCodeMode(activeTab === 'CODE');
   }, [activeTab, setIsCodeMode]);
-  
+
   // Szinkronizálja az inspector state-et a preview kontextussal
-  // Using refs to track previous values and avoid unnecessary updates
-  const prevStateRef = React.useRef<string>('');
-  const prevClassesRef = React.useRef<string>('');
-  
   useEffect(() => {
-    // Create stable string keys for comparison - more reliable than deep equal
-    const stateKey = JSON.stringify({
-      appearance: state.appearance,
-      typography: state.typography,
-      border: state.border,
-      effects: state.effects,
-      transforms: state.transforms,
-      transforms3D: state.transforms3D,
-      padding: state.padding,
-      size: state.size,
-      textContent: state.textContent,
-      tag: state.tag
-    });
-    
-    const stateChanged = stateKey !== prevStateRef.current;
-    const classesChanged = generatedClasses !== prevClassesRef.current;
-    
-    if (stateChanged || classesChanged) {
-      prevStateRef.current = stateKey;
-      prevClassesRef.current = generatedClasses;
-      setInspectorState(state);
-      setGeneratedClasses(generatedClasses);
-    }
+    setInspectorState(state);
+    setGeneratedClasses(generatedClasses);
   }, [state, generatedClasses, setInspectorState, setGeneratedClasses]);
 
   // --- Event Handlers (memoizált) ---
