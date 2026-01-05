@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import type { InspectorState } from '@/components/PropertyInspector/types';
 import { DEFAULT_INSPECTOR_STATE } from '@/components/PropertyInspector/constants';
 
@@ -12,7 +12,7 @@ interface CodePreviewContextType {
   savedHtml: string;
   savedCss: string;
   saveCode: () => void;
-  clearSavedCode: () => void; // ✅ ÚJ: Mentett kód törlése
+  clearSavedCode: () => void;
   hasSavedCode: boolean;
   showThemeCustomizer: boolean;
   setShowThemeCustomizer: (show: boolean) => void;
@@ -42,32 +42,35 @@ export const CodePreviewProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [inspectorState, setInspectorStateInternal] = useState<InspectorState>(DEFAULT_INSPECTOR_STATE);
   const [generatedClasses, setGeneratedClasses] = useState('');
 
-  // ✅ ÚJ: Mentett kód mentése
+  // FIX: useRef a hasSavedCode aktuális értékéhez (elkerüli a dependency loop-ot)
+  const hasSavedCodeRef = useRef(hasSavedCode);
+  hasSavedCodeRef.current = hasSavedCode;
+
+  // Mentett kód mentése
   const saveCode = useCallback(() => {
     setSavedHtml(customHtml);
     setSavedCss(customCss);
     setHasSavedCode(true);
   }, [customHtml, customCss]);
 
-  // ✅ ÚJ: Mentett kód törlése (CLEAR gomb funkció)
+  // Mentett kód törlése (CLEAR gomb funkció)
   const clearSavedCode = useCallback(() => {
     setSavedHtml('');
     setSavedCss('');
     setHasSavedCode(false);
   }, []);
 
-  // ✅ MÓDOSÍTOTT: Inspector state setter auto-clear funkcióval
+  // FIX: Inspector state setter auto-clear funkcióval - STABIL dependency array
   const setInspectorState = useCallback((state: InspectorState) => {
     setInspectorStateInternal(state);
     
-    // Auto-clear: Inspector változáskor automatikusan töröljük a mentett kódot
-    // Ez biztosítja, hogy az inspector módosítások azonnal láthatóak legyenek
-    if (hasSavedCode) {
+    // Auto-clear: hasSavedCodeRef.current használata a dependency loop elkerülésére
+    if (hasSavedCodeRef.current) {
       setSavedHtml('');
       setSavedCss('');
       setHasSavedCode(false);
     }
-  }, [hasSavedCode]);
+  }, []); // FIX: Üres dependency array, mert ref-et használunk
 
   return (
     <CodePreviewContext.Provider value={{
@@ -80,7 +83,7 @@ export const CodePreviewProvider: React.FC<{ children: React.ReactNode }> = ({ c
       savedHtml,
       savedCss,
       saveCode,
-      clearSavedCode, // ✅ ÚJ: Exportáljuk a context-ben
+      clearSavedCode,
       hasSavedCode,
       showThemeCustomizer,
       setShowThemeCustomizer,
