@@ -225,8 +225,9 @@ interface TabSelectorProps {
 export const TabSelector: React.FC<TabSelectorProps> = ({ value, onChange, options }) => (
   <div className="flex border border-border rounded-md overflow-hidden bg-background">
     {options.map((tab, i) => (
-      <button 
+      <button
         key={tab}
+        type="button"
         onClick={() => onChange(tab)}
         className={`px-3 py-1 text-[9px] font-bold transition-all ${
           value === tab 
