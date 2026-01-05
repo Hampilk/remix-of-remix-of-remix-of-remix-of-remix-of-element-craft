@@ -13,7 +13,6 @@ import { Accordion } from '../ui/accordion';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useCodePreview } from '@/contexts/CodePreviewContext';
-import { deepEqual } from '@/lib/deepEqual';
 
 import type { TabMode, Breakpoint, BorderRadiusTab, InspectorState } from './types';
 import { DEFAULT_OPEN_SECTIONS, BREAKPOINTS } from './constants';
@@ -596,18 +595,31 @@ export const PropertyInspector: React.FC = () => {
   }, [activeTab, setIsCodeMode]);
   
   // Szinkronizálja az inspector state-et a preview kontextussal
-  // Using refs to avoid infinite loops from state object identity changes
-  const stateRef = React.useRef(state);
-  const classesRef = React.useRef(generatedClasses);
+  // Using refs to track previous values and avoid unnecessary updates
+  const prevStateRef = React.useRef<string>('');
+  const prevClassesRef = React.useRef<string>('');
   
   useEffect(() => {
-    // Deep equality check - more performant than JSON.stringify for nested objects
-    const stateChanged = !deepEqual(state, stateRef.current);
-    const classesChanged = generatedClasses !== classesRef.current;
+    // Create stable string keys for comparison - more reliable than deep equal
+    const stateKey = JSON.stringify({
+      appearance: state.appearance,
+      typography: state.typography,
+      border: state.border,
+      effects: state.effects,
+      transforms: state.transforms,
+      transforms3D: state.transforms3D,
+      padding: state.padding,
+      size: state.size,
+      textContent: state.textContent,
+      tag: state.tag
+    });
+    
+    const stateChanged = stateKey !== prevStateRef.current;
+    const classesChanged = generatedClasses !== prevClassesRef.current;
     
     if (stateChanged || classesChanged) {
-      stateRef.current = state;
-      classesRef.current = generatedClasses;
+      prevStateRef.current = stateKey;
+      prevClassesRef.current = generatedClasses;
       setInspectorState(state);
       setGeneratedClasses(generatedClasses);
     }
