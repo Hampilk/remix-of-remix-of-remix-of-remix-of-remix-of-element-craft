@@ -12,12 +12,13 @@ interface ColorButtonProps {
   color: string | null;
   onChange: (color: string | null) => void;
   label: string;
+  'aria-label'?: string;
 }
 
-export const ColorButton: React.FC<ColorButtonProps> = ({ color, onChange, label }) => (
+export const ColorButton: React.FC<ColorButtonProps> = ({ color, onChange, label, 'aria-label': ariaLabel }) => (
   <Popover>
     <PopoverTrigger asChild>
-      <button className={`h-7 flex items-center gap-2 px-2 py-1 text-xs rounded-md border border-border bg-card hover:bg-secondary transition-colors ${!color ? 'opacity-60' : ''}`}>
+      <button type="button" className={`h-7 flex items-center gap-2 px-2 py-1 text-xs rounded-md border border-border bg-card hover:bg-secondary transition-colors ${!color ? 'opacity-60' : ''}`} aria-label={ariaLabel}>
         <div 
           className="w-4 h-4 rounded-full border border-border shadow-inner" 
           style={{ backgroundColor: color || 'hsl(var(--muted))' }}
@@ -199,8 +200,9 @@ export const BreakpointSelector: React.FC<BreakpointSelectorProps> = ({
 }) => (
   <div className="flex border border-border rounded-md overflow-hidden h-6">
     {options.map((opt, i) => (
-      <button 
+      <button
         key={opt.value}
+        type="button"
         onClick={() => onChange(opt.value)}
         className={`px-2 text-[9px] font-medium transition-all ${
           value === opt.value 
@@ -224,8 +226,9 @@ interface TabSelectorProps {
 export const TabSelector: React.FC<TabSelectorProps> = ({ value, onChange, options }) => (
   <div className="flex border border-border rounded-md overflow-hidden bg-background">
     {options.map((tab, i) => (
-      <button 
+      <button
         key={tab}
+        type="button"
         onClick={() => onChange(tab)}
         className={`px-3 py-1 text-[9px] font-bold transition-all ${
           value === tab 

@@ -101,8 +101,8 @@ export const PreviewBox: React.FC<PreviewBoxProps> = ({
   return (
     <div className="relative bg-card border border-border rounded-xl p-6 overflow-hidden">
       {/* Grid background pattern */}
-      <div 
-        className="absolute inset-0 opacity-5"
+      <div
+        className="absolute inset-0 opacity-5 pointer-events-none"
         style={{
           backgroundImage: `
             linear-gradient(to right, hsl(var(--foreground)) 1px, transparent 1px),
