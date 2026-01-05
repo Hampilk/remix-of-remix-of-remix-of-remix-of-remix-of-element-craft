@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import type { InspectorState } from '@/components/PropertyInspector/types';
 import { DEFAULT_INSPECTOR_STATE } from '@/components/PropertyInspector/constants';
 
@@ -12,6 +12,7 @@ interface CodePreviewContextType {
   savedHtml: string;
   savedCss: string;
   saveCode: () => void;
+  clearSavedCode: () => void; // ✅ ÚJ: Mentett kód törlése
   hasSavedCode: boolean;
   showThemeCustomizer: boolean;
   setShowThemeCustomizer: (show: boolean) => void;
@@ -38,14 +39,35 @@ export const CodePreviewProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [savedCss, setSavedCss] = useState('');
   const [hasSavedCode, setHasSavedCode] = useState(false);
   const [showThemeCustomizer, setShowThemeCustomizer] = useState(true);
-  const [inspectorState, setInspectorState] = useState<InspectorState>(DEFAULT_INSPECTOR_STATE);
+  const [inspectorState, setInspectorStateInternal] = useState<InspectorState>(DEFAULT_INSPECTOR_STATE);
   const [generatedClasses, setGeneratedClasses] = useState('');
 
-  const saveCode = () => {
+  // ✅ ÚJ: Mentett kód mentése
+  const saveCode = useCallback(() => {
     setSavedHtml(customHtml);
     setSavedCss(customCss);
     setHasSavedCode(true);
-  };
+  }, [customHtml, customCss]);
+
+  // ✅ ÚJ: Mentett kód törlése (CLEAR gomb funkció)
+  const clearSavedCode = useCallback(() => {
+    setSavedHtml('');
+    setSavedCss('');
+    setHasSavedCode(false);
+  }, []);
+
+  // ✅ MÓDOSÍTOTT: Inspector state setter auto-clear funkcióval
+  const setInspectorState = useCallback((state: InspectorState) => {
+    setInspectorStateInternal(state);
+    
+    // Auto-clear: Inspector változáskor automatikusan töröljük a mentett kódot
+    // Ez biztosítja, hogy az inspector módosítások azonnal láthatóak legyenek
+    if (hasSavedCode) {
+      setSavedHtml('');
+      setSavedCss('');
+      setHasSavedCode(false);
+    }
+  }, [hasSavedCode]);
 
   return (
     <CodePreviewContext.Provider value={{
@@ -58,6 +80,7 @@ export const CodePreviewProvider: React.FC<{ children: React.ReactNode }> = ({ c
       savedHtml,
       savedCss,
       saveCode,
+      clearSavedCode, // ✅ ÚJ: Exportáljuk a context-ben
       hasSavedCode,
       showThemeCustomizer,
       setShowThemeCustomizer,
