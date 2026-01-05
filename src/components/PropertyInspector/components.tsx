@@ -200,8 +200,9 @@ export const BreakpointSelector: React.FC<BreakpointSelectorProps> = ({
 }) => (
   <div className="flex border border-border rounded-md overflow-hidden h-6">
     {options.map((opt, i) => (
-      <button 
+      <button
         key={opt.value}
+        type="button"
         onClick={() => onChange(opt.value)}
         className={`px-2 text-[9px] font-medium transition-all ${
           value === opt.value 
