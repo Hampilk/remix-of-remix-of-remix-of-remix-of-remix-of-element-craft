@@ -13,6 +13,7 @@ import { Accordion } from '../ui/accordion';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useCodePreview } from '@/contexts/CodePreviewContext';
+import { deepEqual } from '@/lib/deepEqual';
 
 import type { TabMode, Breakpoint, BorderRadiusTab, InspectorState } from './types';
 import { DEFAULT_OPEN_SECTIONS, BREAKPOINTS } from './constants';
@@ -600,11 +601,11 @@ export const PropertyInspector: React.FC = () => {
   const classesRef = React.useRef(generatedClasses);
   
   useEffect(() => {
-    // Only update if the serialized values actually changed
-    const stateJson = JSON.stringify(state);
-    const prevStateJson = JSON.stringify(stateRef.current);
+    // Deep equality check - more performant than JSON.stringify for nested objects
+    const stateChanged = !deepEqual(state, stateRef.current);
+    const classesChanged = generatedClasses !== classesRef.current;
     
-    if (stateJson !== prevStateJson || generatedClasses !== classesRef.current) {
+    if (stateChanged || classesChanged) {
       stateRef.current = state;
       classesRef.current = generatedClasses;
       setInspectorState(state);
