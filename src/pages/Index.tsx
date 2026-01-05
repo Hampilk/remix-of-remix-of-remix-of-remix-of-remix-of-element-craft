@@ -3,7 +3,8 @@ import { PreviewBox } from "@/components/PropertyInspector/PreviewBox";
 import { useGeneratedStyles } from "@/components/PropertyInspector/hooks";
 import { CodePreviewProvider, useCodePreview } from "@/contexts/CodePreviewContext";
 import { sanitizeHtml, sanitizeCss } from "@/lib/sanitize";
-import { memo, useMemo, type ReactNode } from "react";
+import { memo, useMemo, useCallback, type ReactNode } from "react";
+import { X } from "lucide-react";
 
 /**
  * Főkomponens - Provider wrappel ellátva
@@ -132,21 +133,50 @@ const StatusBadge = memo<StatusBadgeProps>(({ type }) => {
 StatusBadge.displayName = 'StatusBadge';
 
 /**
+ * Clear saved code gomb komponens
+ */
+interface ClearSavedCodeButtonProps {
+  onClear: () => void;
+}
+
+const ClearSavedCodeButton = memo<ClearSavedCodeButtonProps>(({ onClear }) => {
+  return (
+    <button
+      onClick={onClear}
+      className="text-[9px] bg-destructive/20 text-destructive hover:bg-destructive/30 px-1.5 py-0.5 rounded flex items-center gap-1 transition-colors"
+      aria-label="Clear saved code and return to inspector"
+      title="Return to Inspector Mode"
+    >
+      <X className="w-2.5 h-2.5" />
+      CLEAR
+    </button>
+  );
+});
+
+ClearSavedCodeButton.displayName = 'ClearSavedCodeButton';
+
+/**
  * Preview panel fejléc komponens
  */
 interface PreviewHeaderProps {
   hasSavedCode: boolean;
   isCodeMode: boolean;
+  onClearSavedCode: () => void;
 }
 
-const PreviewHeader = memo<PreviewHeaderProps>(({ hasSavedCode, isCodeMode }) => {
+const PreviewHeader = memo<PreviewHeaderProps>(({ hasSavedCode, isCodeMode, onClearSavedCode }) => {
   return (
     <div className="border-b border-border py-2 px-4 bg-secondary/50 flex items-center justify-between">
       <h3 className="text-xs uppercase font-bold text-primary">
         Preview
       </h3>
       <div className="flex items-center gap-1.5">
-        {hasSavedCode && <StatusBadge type="saved" />}
+        {hasSavedCode && (
+          <>
+            <StatusBadge type="saved" />
+            <ClearSavedCodeButton onClear={onClearSavedCode} />
+          </>
+        )}
         {isCodeMode && !hasSavedCode && <StatusBadge type="code" />}
       </div>
     </div>
@@ -270,6 +300,11 @@ PreviewPanelWrapper.displayName = 'PreviewPanelWrapper';
 
 /**
  * Fő Preview Panel komponens XSS védelemmel
+ * 
+ * FIX: Tiszta elkülönítés az Inspector Mode és Custom Code Mode között
+ * - Ha van mentett kód (hasSavedCode), azt jeleníti meg CLEAR gombbal
+ * - Ha Code Mode aktív (isCodeMode) de nincs mentés, élő előnézet
+ * - Egyébként Inspector Mode: dinamikus PreviewBox az inspector beállításokkal
  */
 const PreviewPanel = memo(() => {
   const { 
@@ -279,11 +314,17 @@ const PreviewPanel = memo(() => {
     savedHtml, 
     savedCss, 
     hasSavedCode,
+    clearSavedCode, // FIX: új context action
     inspectorState, 
     generatedClasses 
   } = useCodePreview();
   
   const generatedStyles = useGeneratedStyles(inspectorState);
+  
+  // FIX: Mentett kód törlése callback
+  const handleClearSavedCode = useCallback(() => {
+    clearSavedCode?.();
+  }, [clearSavedCode]);
   
   // Mentett kód használata, ha elérhető, különben az aktuális szerkesztett kód
   const displayHtml = useMemo(
@@ -296,15 +337,21 @@ const PreviewPanel = memo(() => {
     [hasSavedCode, savedCss, customCss]
   );
   
-  // Meghatározzuk, hogy egyedi kód módban vagyunk-e
-  const isCustomCodeMode = isCodeMode || hasSavedCode;
+  // FIX: Egyszerűsített logika - mentett kód prioritást élvez
+  // Ha van mentett kód, azt mutatjuk (függetlenül az isCodeMode-tól)
+  // Ha nincs mentett kód, akkor isCodeMode alapján döntünk
+  const shouldShowCustomCode = hasSavedCode || isCodeMode;
 
   return (
     <PreviewPanelWrapper>
-      <PreviewHeader hasSavedCode={hasSavedCode} isCodeMode={isCodeMode} />
+      <PreviewHeader 
+        hasSavedCode={hasSavedCode} 
+        isCodeMode={isCodeMode}
+        onClearSavedCode={handleClearSavedCode}
+      />
       
       <div className="p-4">
-        {isCustomCodeMode ? (
+        {shouldShowCustomCode ? (
           <CustomCodePreview 
             html={displayHtml}
             css={displayCss}
