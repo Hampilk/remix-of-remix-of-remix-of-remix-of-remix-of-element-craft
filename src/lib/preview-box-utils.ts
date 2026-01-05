@@ -1,7 +1,7 @@
 // PreviewBox Utility Functions
 // Separated for better testability and reusability
 
-import type { InspectorState } from './types';
+import type { InspectorState } from '@/components/PropertyInspector/types';
 
 // Constants
 export const CONSTANTS = {
